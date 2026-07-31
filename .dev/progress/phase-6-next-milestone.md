@@ -1,0 +1,166 @@
+# Phase 6 next-milestone plan: summary, hero preview, and reward visibility
+
+Status: **planned and reviewed; implementation intentionally not started**.
+
+This plan follows the execution rules and step-note format in [PROJECT_MANAGEMENT.md](../PROJECT_MANAGEMENT.md). It is the next scoped milestone after the `0.1.0` MVP release gate. It does not expand the stage, add DLC, add real telemetry, import third-party art, or change the map renderer.
+
+## User objectives
+
+1. Make the run summary visually useful instead of presenting one plain text line.
+2. Show a meaningful level beside each hero in the start-of-run selector (for example, `Wizard - Level 4`).
+3. Make gold visible and trustworthy: show gold collected during the run and in the final result, and clarify the yellow/gold pickup indicator.
+4. Review the current game against the intended survivor-like experience and define the next implementation step before writing code.
+
+## Evidence snapshot
+
+- Current branch is `agent/token-guild-mvp-ui` at commit `406fd8e`; the working tree was clean before this plan file was added.
+- Current checks pass: `npm test` (23 tests), `npm run build`, and `npm run test:e2e` (two Extension Development Host tests). The E2E test opens the webview but does not click through the game DOM.
+- The referenced screenshot shows the current summary as a single output line (`Victory`, enemy count, tokens, gold, and damage) plus two plain actions. It does not show a structured reward, loadout, progression, or gold breakdown.
+- `src/webview/main.ts` currently builds the summary with one `output` value in `finishRun()` and delegates PNG text to `src/webview/shareCard.ts`.
+- `RunSummary` currently contains outcome, elapsed seconds, tokens, gold, enemies defeated, and damage by weapon. It does not contain hero identity/level, enemies spawned, upgrade/loadout state, or explicit gold-source fields.
+- The Guild selector creates options from `classes.json` names only. `PersistedProgress` has no per-hero level or best-level record, so a label such as `Wizard - Level 4` currently has no authoritative source.
+- Gold is accumulated in `RunState.gold`; ordinary enemy kills add gold immediately, and a boss also creates a `gold-chest` pickup. The current code needs an explicit ownership invariant before UI work because immediate reward plus pickup collection can double-count a boss reward.
+- Gold and XP pickups are rendered as small map dots. There is no dedicated run HUD counter or event explanation for gold collected.
+- The PM's top-level `Current status` still describes a documentation-only repository even though its phase checkboxes and release evidence describe the implemented MVP; Step 6.0 must reconcile that status before the next milestone is marked complete.
+
+## Research and product alignment
+
+The reference pattern is a survivor-like run HUD, not a copy of another game's screen. In *Vampire Survivors*, level-up pauses the run and presents a small set of weapon/passive choices; passive items modify player stats; weapons have levels and can evolve after their conditions are met. See [Level up](https://vampire-survivors.fandom.com/wiki/Level_up), [Player stats](https://vampire-survivors.fandom.com/wiki/Player_stats), [Passive items](https://vampire-survivors.fandom.com/wiki/Passive_items), and [Weapons](https://vampire-survivors.fandom.com/wiki/Weapons).
+
+Token Guild should preserve the MVP subset: one stage, one primary weapon, three deterministic upgrade cards, synthetic telemetry, a boss, persistent Guild gold/Might, and a local summary export. The milestone should improve legibility and trust in those systems rather than add full inventory/evolution parity.
+
+## Decisions to freeze before implementation
+
+### D1. Meaning of a hero level in the selector
+
+Recommended MVP interpretation: persist each hero's **highest reached run level**, display it as `Wizard - Level 4` with a small `best` tooltip/accessible description, and keep new runs starting at Level 1. This gives the requested information without silently turning the selector into a persistent starting-level advantage or breaking the survivor-like reset-per-run loop.
+
+If the intended meaning is instead a persistent starting level, that is a separate progression rule requiring balance, migration, and reward decisions. The implementation must not infer that behavior from a label alone.
+
+### D2. Gold ledger invariant
+
+Choose one owner for each reward before rendering it:
+
+- ordinary enemy gold is credited exactly once at the defined collection/reward event;
+- the boss chest is either a pending pickup or an immediate reward, never both;
+- run gold is separate from the persisted Guild wallet until the run reward is committed;
+- the idempotent host reward path remains the authority across summary reopen/reload.
+
+The summary must distinguish `run gold earned` from `Guild gold after save` so a user can reconcile the number.
+
+### D3. Summary data contract
+
+Extend the run summary only with approved, privacy-safe fields needed by the UI/export: hero ID/name, run level, elapsed time, token total plus source/accuracy, gold earned, enemy spawned/defeated counts, damage by weapon, and selected run upgrades. Do not add prompts, workspace paths, model output, or raw telemetry payloads.
+
+## Planned execution steps
+
+### Step 6.0 - freeze evidence and data decisions
+
+Step: `6.0` - summary/hero/reward contract freeze  
+Objective: approve the authoritative fields and invariants needed by all three user-visible changes.  
+Dependencies: current MVP release gate; this plan.  
+Scope: `.dev/progress/phase-6-next-milestone.md`, `src/game/types.ts`, `src/shared/types.ts`, `src/extension/stateManager.ts` only if the chosen hero-level schema requires migration.  
+Risks: inventing persistent character progression or changing reward semantics without a migration and balance rule.  
+Acceptance: D1-D3 are recorded as explicit decisions; every new field has an owner, default, validation rule, persistence behavior, and export/privacy classification.  
+Checks: `npm run typecheck`; focused schema/state tests; review the diff before any UI implementation.  
+Result: pending.  
+Follow-up: start Step 6.1 only after the contract is stable.
+
+### Step 6.1 - redesign the run summary
+
+Step: `6.1` - structured result screen  
+Objective: turn the plain summary line into a readable, keyboard-accessible result panel.  
+Dependencies: Step 6.0 summary data contract.  
+Scope: `src/webview/main.ts`, `src/webview/style.css`, `src/webview/shareCard.ts`, shared/game summary types, and summary tests.  
+Risks: visual density in a narrow sidebar; accidental exposure of raw telemetry; export fields drifting from the on-screen contract.  
+Acceptance:
+
+- Outcome is prominent and visually distinct for victory/defeat.
+- Hero name, level, duration, tokens with source/accuracy, gold earned, and enemy spawned/defeated counts have labeled stat blocks.
+- Damage-by-weapon and selected upgrades/loadout render as compact rows/chips with an empty-state message.
+- A clearly separated reward block shows run gold earned and, after host persistence, the Guild wallet total.
+- Export remains local and contains only the approved summary fields; empty damage/upgrades and defeat states render correctly.
+- Keyboard focus order, contrast, reduced motion, and narrow-sidebar layout remain valid.
+
+Checks: focused summary/share-card tests; `npm run lint`; `npm run typecheck`; `npm test`; Extension Development Host run through victory and defeat paths where practical.  
+Result: pending.  
+Follow-up: proceed to selector level preview after the summary contract and UI tests pass.
+
+### Step 6.2 - add hero level preview at run start
+
+Step: `6.2` - authoritative hero level labels  
+Objective: show each hero's recorded highest reached level in the selector without changing the new-run starting level unless D1 explicitly changes.  
+Dependencies: Step 6.0 D1; persistence migration/recovery rules.  
+Scope: `src/shared/types.ts`, `src/shared/validation.ts`, `src/extension/stateManager.ts`, `src/webview/main.ts`, `src/webview/style.css`, migration/state tests.  
+Risks: corrupt or future progress; confusing best level with starting level; stale labels after a run.  
+Acceptance:
+
+- Every hero has a validated default record (`highestLevel: 1` unless migrated data says otherwise).
+- Selector labels visibly include the level, for example `Wizard - Level 4`, and accessible text explains whether it is best reached or starting level.
+- Completing or failing a run updates the intended record exactly once according to the chosen policy.
+- Existing progress migrates safely; corrupt/future data falls back without losing unrelated wallet/settings data.
+- A new run's actual `RunState.level` matches the declared D1 behavior.
+
+Checks: migration/default/corruption tests; selector rendering test; deterministic run progression test; `npm test`; E2E activation/open test.  
+Result: pending.  
+Follow-up: use the same hero-level field in the summary panel.
+
+### Step 6.3 - make gold visible and correct
+
+Step: `6.3` - reward ledger and feedback  
+Objective: show gold inflow during the run and reconcile it in the summary without changing the map appearance.  
+Dependencies: Step 6.0 D2; Step 6.1 summary model.  
+Scope: `src/game/types.ts`, `src/game/simulation.ts`, `src/game/telemetryMapping.ts`, `src/webview/main.ts`, `src/webview/style.css`, tests, and share-card fields if approved.  
+Risks: boss reward double counting; confusing gold pickup visuals with XP dots; host/webview duplicate reward messages.  
+Acceptance:
+
+- Run HUD shows current run gold and a labeled gold icon/tooltip; the map stays visually unchanged.
+- Gold pickup/reward feedback distinguishes gold from XP and names the source (`enemy`, `boss chest`, or other approved source).
+- Ordinary kills, boss chest collection, defeat, victory, summary reopen, and duplicate `RECORD_RUN_REWARD` paths each have a deterministic ledger assertion.
+- The final summary shows run gold earned and persisted Guild wallet total separately.
+- Existing Guild Might purchase behavior remains correct after reward reconciliation.
+
+Checks: table-driven ledger tests; boss-chest no-double-count regression; reward idempotency tests; focused UI/source-label test; full `npm test`; E2E smoke run.  
+Result: pending.  
+Follow-up: run the full milestone review.
+
+### Step 6.4 - milestone runtime review and release gate
+
+Step: `6.4` - integrated playthrough and handoff  
+Objective: verify the actual user path and decide whether the next milestone is ready for packaging/review.  
+Dependencies: Steps 6.1-6.3 all pass.  
+Scope: built webview, Extension Development Host, VSIX, this plan, and progress evidence.  
+Risks: unit tests passing while the narrow sidebar, modal focus, summary navigation, or persisted wallet behavior fails in the real host.  
+Acceptance:
+
+- Clean profile: install/open Guild, select a labeled hero, start a run, reach a level-up, choose an upgrade, observe gold/enemy counters, finish victory and defeat paths, open both explanations, and return to Guild.
+- Summary survives the narrow sidebar and keyboard-only navigation; export remains local and privacy-safe.
+- Hero level, gold, upgrades, and Guild wallet agree across summary, return, reload, and reset behavior.
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`, and `npm run package` pass.
+- Evidence is recorded in `.dev/progress/phase-6-next-milestone.md` and the PM checkboxes are updated only for verified criteria.
+
+Checks: full regression suite, isolated VS Code install/smoke, `vsce ls --tree`, package-size check, and manual screenshot review against the referenced image.  
+Result: pending.  
+Follow-up: if all criteria pass, open the next review/packaging checkpoint; otherwise record the exact blocker and keep the milestone open.
+
+## QA matrix
+
+| Area | Required cases | Evidence |
+| --- | --- | --- |
+| Summary | victory, defeat, empty damage, multiple upgrades, zero gold, export | focused UI/share-card tests plus host smoke |
+| Hero level | default, migrated, corrupt, future schema, failed run, completed run, selector refresh | state/migration/selector tests |
+| Gold | ordinary kill, boss chest, uncollected chest, defeat, victory, duplicate host reward, reset | ledger and persistence tests |
+| Runtime | narrow sidebar, keyboard focus, modal open/close, hidden/reopened view, reload | Extension Development Host/manual evidence |
+| Privacy | only approved aggregate summary fields in DOM/export | source review and export assertions |
+
+## Explicitly deferred
+
+- Full *Vampire Survivors* inventory/evolution/character-unlock parity.
+- Real telemetry adapters and token-source changes.
+- Map redesign or map-color changes.
+- Purchased third-party art integration; current inline icons remain the approved MVP assets.
+- Performance benchmarking beyond existing bounded-resource/stability checks.
+
+## Next action after plan approval
+
+Begin **Step 6.0** only. Freeze the hero-level semantics, gold ledger ownership, and summary data contract in a decision record; do not begin UI edits until those three decisions and their focused tests are defined.
