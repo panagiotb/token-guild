@@ -1,0 +1,11 @@
+[
+  { "id": "broadsword", "name": "Broadsword", "damage": 20, "cooldown": 1.35, "maxLevel": 8, "evolution": { "passiveId": "power_gauntlets", "resultId": "excalibur" } },
+  { "id": "arcane_bolt", "name": "Arcane Bolt", "damage": 10, "cooldown": 1, "maxLevel": 8, "evolution": { "passiveId": "haste_amulet", "resultId": "archmage_staff" } },
+  { "id": "throwing_daggers", "name": "Throwing Daggers", "damage": 7, "cooldown": 1, "maxLevel": 8 },
+  { "id": "bouncing_arrow", "name": "Bouncing Arrow", "damage": 10, "cooldown": 3, "maxLevel": 8 },
+  { "id": "aegis_barrier", "name": "Aegis Barrier", "damage": 5, "cooldown": 1, "maxLevel": 8, "evolution": { "passiveId": "orb_of_expansion", "resultId": "sanctuary" } },
+  { "id": "bone_throw", "name": "Bone Throw", "damage": 8, "cooldown": 1.4, "maxLevel": 8 },
+  { "id": "excalibur", "name": "Excalibur", "damage": 35, "cooldown": 1, "maxLevel": 8 },
+  { "id": "archmage_staff", "name": "Archmage Staff", "damage": 24, "cooldown": 0.75, "maxLevel": 8 },
+  { "id": "sanctuary", "name": "Sanctuary", "damage": 18, "cooldown": 0.8, "maxLevel": 8 }
+]

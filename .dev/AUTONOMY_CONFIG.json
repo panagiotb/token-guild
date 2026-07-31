@@ -1,0 +1,49 @@
+{
+  "execution": {
+    "mode": "unattended",
+    "scope": "mvp-only",
+    "releaseVersion": "0.1.0",
+    "stopBefore": [
+      "marketplace-publishing",
+      "external-messages",
+      "destructive-operations",
+      "credential-use",
+      "licensing-decisions",
+      "material-scope-changes"
+    ]
+  },
+  "product": {
+    "releaseHost": "desktop-vscode",
+    "forks": ["cursor", "windsurf"],
+    "forkSupport": "best-effort-smoke-test",
+    "includeDlc": false,
+    "includeFullMapping": false,
+    "releaseArtifact": "local-vsix"
+  },
+  "telemetry": {
+    "firstImplementation": "synthetic-fixtures",
+    "realAdapters": "stable-opt-in-only",
+    "estimatedCountsMustBeLabeled": true,
+    "rawContentRetention": false,
+    "secretsAvailable": false
+  },
+  "resources": {
+    "allowOnlineDependencyAndResourceDownloads": true,
+    "approval": "request-command-level-escalation-when-required",
+    "externalPublication": false
+  },
+  "assets": {
+    "firstPass": "original-or-placeholder-assets",
+    "licensedAssets": "defer-until-reviewed"
+  },
+  "quality": {
+    "performanceBenchmarking": "not-required-for-mvp",
+    "required": [
+      "deterministic-tests",
+      "clean-build",
+      "resource-teardown",
+      "bounded-queues-and-entity-counts",
+      "security-and-privacy-checks"
+    ]
+  }
+}

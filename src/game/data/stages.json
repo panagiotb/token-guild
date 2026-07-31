@@ -1,0 +1,13 @@
+[
+  {
+    "id": "code-dungeon",
+    "name": "Code Dungeon",
+    "durationSeconds": 30,
+    "boss": "terminal_exit_boss",
+    "waves": [
+      { "fromSecond": 0, "enemy": "syntax_specter", "spawnEverySeconds": 1 },
+      { "fromSecond": 10, "enemy": "bug_bat", "spawnEverySeconds": 1 },
+      { "fromSecond": 20, "enemy": "memory_golem", "spawnEverySeconds": 1 }
+    ]
+  }
+]

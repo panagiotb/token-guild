@@ -1,0 +1,6 @@
+[
+  { "id": "power_gauntlets", "name": "Power Gauntlets", "stat": "might", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "haste_amulet", "name": "Haste Amulet", "stat": "cooldown", "valuePerLevel": 0.08, "maxLevel": 5 },
+  { "id": "orb_of_expansion", "name": "Orb of Expansion", "stat": "area", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "token_magnetism", "name": "Token Magnetism", "stat": "magnet", "valuePerLevel": 0.33, "maxLevel": 5 }
+]

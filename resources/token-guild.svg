@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Token Guild">
+  <rect width="128" height="128" rx="20" fill="#2b1b3d"/>
+  <path d="M64 18 98 38v40L64 98 30 78V38z" fill="#d5a83a" stroke="#f7e7ad" stroke-width="5"/>
+  <path d="M64 32v32m0 0-18 10m18-10 18 10" stroke="#2b1b3d" stroke-width="7" stroke-linecap="round"/>
+</svg>

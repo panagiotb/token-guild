@@ -106,9 +106,13 @@ Pressing `Ctrl + Shift + H` (or clicking the panel header) instantly swaps the W
 
 ---
 
-## 6. MVP Development Roadmap
+## 6. MVP Development Roadmap & Autonomous Execution Blueprint
 
-1. **Phase 1 (Core Extension):** VS Code extension wrapper, `FileSystemWatcher` token estimator, and Webview IPC bridge.
-2. **Phase 2 (Engine Integration):** Import Phaser.js canvas template; implement player movement, mob spawning math, and collision detection.
-3. **Phase 3 (Reskin & Content):** Load 16-bit fantasy sprite sheet; implement 6 base classes and 8 weapon/passive JSON tables.
-4. **Phase 4 (Stealth & Polish):** Add Boss Key state toggle, audio effects, and 1-click Twitter/LinkedIn share card generator.
+👉 **Master Project Management File**: [`PROJECT_MANAGEMENT.md`](file:///d:/Evdaimon%20Games/Apps/Token%20Guild/.dev/PROJECT_MANAGEMENT.md)
+
+1. **Phase 1 (Solid Foundation):** Build pipeline, TypeScript setup, Vitest QA harness, Typed IPC protocol, 4-Layer Telemetry Bus, globalState Manager, Phaser 3 Webview bootstrap.
+2. **Phase 2 (Core Game Engine):** Player hero physics entity, enemy mob pooling, weapon collision matrix, real-time token dynamic mechanics, drop pickups.
+3. **Phase 3 (Data-Driven Content System):** 1:1 Vampire Survivors data loader, 6 base hero classes, 13 base weapons + passives, 13 evolution recipes, stage wave timers.
+4. **Phase 4 (Advanced Systems & Meta):** Guild meta-shop, permanent stat upgrades, Relics, Arcanas & Darkanas, secret characters, DLC datasets.
+5. **Phase 5 (Audio, Stealth UI & Polish):** "Boss Key" ASCII camouflage toggle, Web Audio SFX, End-of-Run share card generator.
+6. **Phase 6 (Integration & Release):** Full automated E2E test suite, performance & bundle size audit (<10MB), VSIX release packaging.

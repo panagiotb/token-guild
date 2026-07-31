@@ -1,0 +1,8 @@
+[
+  { "id": "warrior", "name": "Warrior", "startingWeaponId": "broadsword", "passive": { "stat": "might", "valuePerLevel": 0.1, "intervalLevels": 10, "maxBonus": 0.5 } },
+  { "id": "wizard", "name": "Wizard", "startingWeaponId": "arcane_bolt", "passive": { "stat": "growth", "valuePerLevel": 0.1, "intervalLevels": 5, "maxBonus": 0.3 } },
+  { "id": "rogue", "name": "Rogue", "startingWeaponId": "throwing_daggers", "passive": { "stat": "amount", "valuePerLevel": 1, "intervalLevels": 1, "maxBonus": 1 } },
+  { "id": "ranger", "name": "Ranger", "startingWeaponId": "bouncing_arrow", "passive": { "stat": "speed", "valuePerLevel": 0.1, "intervalLevels": 5, "maxBonus": 0.3 } },
+  { "id": "paladin", "name": "Paladin", "startingWeaponId": "aegis_barrier", "passive": { "stat": "magnet", "valuePerLevel": 0.25, "intervalLevels": 1, "maxBonus": 0.25 } },
+  { "id": "necromancer", "name": "Necromancer", "startingWeaponId": "bone_throw", "passive": { "stat": "amount", "valuePerLevel": 1, "intervalLevels": 20, "maxBonus": 3 } }
+]
