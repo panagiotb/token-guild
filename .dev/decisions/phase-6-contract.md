@@ -18,7 +18,7 @@ Privacy/export: the hero ID/name and run level may appear in the on-screen summa
 
 ## D2 — gold ledger ownership
 
-`RunState.gold` is run-local currency. Ordinary enemy defeats credit one gold immediately, and the boss defeat credits 100 gold exactly once. The `gold-chest` map marker is a claim/feedback marker with value `0`; collecting it never credits a second reward. The completion telemetry event uses the same one-time boss reward helper and cannot add another 100 gold.
+`RunState.gold` is run-local currency. Ordinary enemy defeats create a one-gold pickup, and the boss defeat creates a 100-gold chest; neither enters the ledger until the hero collects the marker. Each pickup is removed after collection, and the boss chest can credit exactly once. The completion telemetry event uses the same one-time boss reward helper for non-map completion and cannot add another 100 gold.
 
 `RunSummary.gold` is the run-earned total. `RunSummary.goldBreakdown` records `enemyKills` and `bossChest` sources. The persisted Guild wallet is updated only by the host's idempotent `RECORD_RUN_REWARD` operation, keyed by run ID. The summary displays run gold and Guild wallet separately.
 

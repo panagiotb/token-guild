@@ -11,15 +11,19 @@ describe('responsive MVP layout', () => {
 
   it('does not lock the sidebar to a fixed 300px width', () => {
     const css = readFileSync(new URL('../../src/webview/style.css', import.meta.url), 'utf8');
-    expect(css).toContain('max-width: 320px');
+    expect(css).toContain('max-width: 520px');
     expect(css).not.toMatch(/width\s*:\s*300px/);
     expect(css).toContain('.icon-button');
     expect(css).toContain('.upgrade-options');
     expect(css).toContain('.character-panel');
     expect(css).toContain('.token-info');
     expect(css).toContain('.map-frame');
-    expect(css).toContain('.map-hud');
+    expect(css).toContain('.map-toolbar');
+    expect(css).toContain('.map-shell');
     expect(css).toContain('.enemy-counter');
+    expect(css).toContain('data-tooltip');
+    expect(css).toContain('.export-action');
+    expect(css).toContain('transition: none');
     const main = readFileSync(new URL('../../src/webview/main.ts', import.meta.url), 'utf8');
     expect(main).toContain('Synthetic tokens');
     expect(main).toContain('Choose upgrade below to continue:');
@@ -28,6 +32,11 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('id="enemy-spawned"');
     expect(main).toContain('id="enemy-defeated"');
     expect(main).toContain('id="enemy-active"');
+    expect(main).toContain('class="map-toolbar"');
+    expect(main).toContain('renderUpgradeCards');
+    expect(main).toContain('downloadShareCard(run.summary, progress.gold)');
+    expect(main).toContain('counter.dataset.tooltip');
+    expect(main).not.toMatch(/id="enemy-(?:spawned|defeated|active)" title=/);
     expect(main).not.toContain('run-meta-copy');
     expect(main).not.toContain(' · XP ${Math.floor(run.xp)}');
     expect(main).toContain('summary-upgrades');

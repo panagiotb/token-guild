@@ -31,7 +31,8 @@ const icons = {
   enemy: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5a6 6 0 0 1 12 0v5.5l-3 2-3-1-3 1-3-2V9.5Z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><path d="M9 15h6"/></svg>',
   spawned: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>',
   defeated: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 6-6m-3-3 3 3m2-8 6 6m-3 3-3-3"/><path d="m4 20 4-1 9-9a2.8 2.8 0 0 0-4-4l-9 9-1 4Z"/></svg>',
-  active: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>'
+  active: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>',
+  download: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>'
 } as const;
 const upgradeIcons: Record<string, string> = { 'weapon-upgrade': icons.weapon, 'power-gauntlets': icons.power, heal: icons.heal };
 const upgradeHints: Record<string, string> = { 'weapon-upgrade': 'More damage', 'power-gauntlets': '+10% Might', heal: 'Restore 25% HP' };
@@ -51,17 +52,17 @@ app.innerHTML = `
     </section>
     <section id="run-screen" class="screen hidden" aria-labelledby="run-title">
       <div class="run-heading"><h2 id="run-title">Code Dungeon</h2></div>
-      <div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas><div class="map-hud" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div></div>
+      <div class="map-shell"><div class="map-toolbar" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div><div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas></div></div>
       <section class="character-panel" aria-labelledby="character-title">
         <div class="character-heading"><div class="character-portrait">${icons.hero}</div><div><h3 id="character-title">Character</h3><p id="character-role">Starting class</p></div><strong id="character-level">Lvl 1</strong></div>
         <div class="character-bars"><div class="bar-row"><span>HP</span><div id="hp-bar" class="stat-bar" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><output id="hp-value">100/100</output></div><div class="bar-row"><span>XP</span><div id="xp-bar" class="stat-bar xp" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><output id="xp-value">0 / 5</output></div></div>
         <div class="character-loadout"><span id="weapon-detail">Weapon</span><span id="passive-detail">Passive</span></div><div id="character-attributes" class="character-attributes" aria-label="Character attributes"></div><div id="character-upgrades" class="character-upgrades" aria-label="Run upgrades"></div>
       </section>
-      <div class="run-meta" id="run-meta" aria-live="polite"><div class="enemy-counters" aria-label="Enemy counters"><span class="enemy-counter" id="enemy-spawned" title="Enemies spawned"><span class="counter-icon">${icons.spawned}</span><strong id="enemy-spawned-count">0</strong></span><span class="enemy-counter" id="enemy-defeated" title="Enemies defeated"><span class="counter-icon">${icons.defeated}</span><strong id="enemy-defeated-count">0</strong></span><span class="enemy-counter" id="enemy-active" title="Enemies currently active"><span class="counter-icon">${icons.active}</span><strong id="enemy-active-count">0</strong></span></div><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
+      <div class="run-meta" id="run-meta" aria-live="polite"><div class="enemy-counters" aria-label="Enemy counters"><span class="enemy-counter" id="enemy-spawned" tabindex="0"><span class="counter-icon">${icons.spawned}</span><strong id="enemy-spawned-count">0</strong></span><span class="enemy-counter" id="enemy-defeated" tabindex="0"><span class="counter-icon">${icons.defeated}</span><strong id="enemy-defeated-count">0</strong></span><span class="enemy-counter" id="enemy-active" tabindex="0"><span class="counter-icon">${icons.active}</span><strong id="enemy-active-count">0</strong></span></div><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
       <div id="cards" class="cards hidden" aria-live="polite"></div>
       <p class="controls">Move with arrow keys or WASD. Synthetic tokens flow while the run is active.</p>
       <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 3 synthetic tokens every 250 ms, displayed as 12 tokens per second.</p><ul><li>Every token grants 1 XP.</li><li>Token throughput can modify combat; the fixture is intentionally steady.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
-      <dialog id="gold-dialog" class="token-dialog"><form method="dialog"><h3>Gold ledger</h3><p>Run gold is earned locally and is added to the Guild wallet only once when the run reward is recorded.</p><ul><li>Ordinary enemy: +1 gold at defeat.</li><li>Boss chest: +100 gold at boss defeat. The yellow map marker is feedback for that reward and cannot pay it twice.</li><li>Run gold and Guild wallet totals are shown separately on the result screen.</li></ul><p id="gold-breakdown-dialog">No gold earned yet.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
+      <dialog id="gold-dialog" class="token-dialog"><form method="dialog"><h3>Gold ledger</h3><p>Run gold is earned when the hero collects a yellow drop and is added to the Guild wallet only once when the run reward is recorded.</p><ul><li>Ordinary enemy coin: +1 gold on collection.</li><li>Boss chest: +100 gold on collection. The yellow map marker remains pending until the hero reaches it.</li><li>Run gold and Guild wallet totals are shown separately on the result screen.</li></ul><p id="gold-breakdown-dialog">No gold earned yet.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="summary-screen" class="screen hidden" aria-labelledby="summary-title">
       <h2 id="summary-title">Run Summary</h2><output id="summary" class="sr-only" role="status"></output>
@@ -71,7 +72,7 @@ app.innerHTML = `
         <section class="summary-section" aria-labelledby="summary-build-title"><h4 id="summary-build-title">Selected upgrades</h4><div id="summary-upgrades" class="summary-chips"></div></section>
         <section class="summary-section" aria-labelledby="summary-damage-title"><h4 id="summary-damage-title">Damage by weapon</h4><div id="summary-damage" class="summary-rows"></div></section>
       </section>
-      <div class="summary-actions"><button class="secondary-action" type="button" id="share-card">Export summary PNG</button><button class="primary-action" type="button" id="return-guild">Return to Guild</button></div>
+      <div class="summary-actions"><button class="secondary-action export-action" type="button" id="share-card">${icons.download}<span>Export summary PNG</span></button><button class="primary-action" type="button" id="return-guild">Return to Guild</button></div>
     </section>
   </section>
 `;
@@ -99,6 +100,7 @@ let tokenBus: TokenBus | undefined;
 let activeRunId: string | undefined;
 const keys = new Set<string>();
 let previousPhase = 'guild';
+let renderedUpgradeSignature = '';
 
 function labelForId(value: string | undefined): string {
   return value ? value.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ') : 'Unknown';
@@ -113,7 +115,8 @@ function setCounter(id: string, value: number, label: string): void {
   setText(`${id}-count`, String(value));
   const counter = document.querySelector<HTMLElement>(`#${id}`);
   if (counter) {
-    counter.title = `${label}: ${value}`;
+    counter.dataset.tooltip = `${label}: ${value}`;
+    counter.removeAttribute('title');
     counter.setAttribute('aria-label', `${label}: ${value}`);
   }
 }
@@ -155,7 +158,12 @@ function renderWorld(): void {
   if (!run) return;
   const screenX = (x: number) => canvas.width / 2 + x;
   const screenY = (y: number) => canvas.height / 2 + y;
-  for (const pickup of run.pickups) { context.fillStyle = pickup.kind === 'gold-chest' ? '#f0c94b' : '#70c8ff'; context.fillRect(screenX(pickup.x) - 2, screenY(pickup.y) - 2, 4, 4); }
+  for (const pickup of run.pickups) {
+    const isGold = pickup.kind === 'gold-chest' || pickup.kind === 'gold-coin';
+    const size = pickup.kind === 'gold-chest' ? 6 : pickup.kind === 'gold-coin' ? 3 : 4;
+    context.fillStyle = isGold ? '#f0c94b' : '#70c8ff';
+    context.fillRect(screenX(pickup.x) - size / 2, screenY(pickup.y) - size / 2, size, size);
+  }
   for (const enemy of run.enemies) { context.fillStyle = enemy.isBoss ? '#e06c75' : '#a66cff'; context.beginPath(); context.arc(screenX(enemy.x), screenY(enemy.y), enemy.isBoss ? 9 : 4, 0, Math.PI * 2); context.fill(); }
   context.fillStyle = '#64d98b'; context.beginPath(); context.arc(screenX(run.hero.x), screenY(run.hero.y), 7, 0, Math.PI * 2); context.fill();
 }
@@ -191,6 +199,26 @@ function renderCharacter(): void {
   upgrades.replaceChildren(...(upgradeEntries.length > 0 ? upgradeEntries : ['No run upgrades yet']).map((value) => { const span = document.createElement('span'); span.textContent = value; if (value === 'No run upgrades yet') span.className = 'no-upgrades'; return span; }));
 }
 
+function renderUpgradeCards(): void {
+  if (!run || run.phase !== 'level-up') return;
+  const signature = run.pendingCards.map((card) => `${card.id}:${card.label}:${card.target}`).join('|');
+  if (signature === renderedUpgradeSignature) return;
+  renderedUpgradeSignature = signature;
+  cards.replaceChildren();
+  const heading = document.createElement('div'); heading.className = 'level-up-heading';
+  const title = document.createElement('h3'); title.textContent = 'Level up';
+  const hint = document.createElement('span'); hint.textContent = 'Choose upgrade below to continue:';
+  heading.append(title, hint);
+  const options = document.createElement('div'); options.className = 'upgrade-options';
+  for (const card of run.pendingCards) {
+    const hintText = upgradeHints[card.id] ?? 'Improve your run';
+    const button = document.createElement('button'); button.className = 'upgrade-card'; button.type = 'button'; button.setAttribute('aria-label', `${card.label}: ${hintText}`); button.innerHTML = `${upgradeIcons[card.id] ?? icons.power}<span class="upgrade-copy"><strong>${card.label}</strong><small>${hintText}</small></span>`;
+    button.addEventListener('click', () => { if (run?.phase === 'level-up') { chooseUpgrade(run, card.id); renderRun(); } });
+    options.append(button);
+  }
+  cards.append(heading, options);
+}
+
 function renderRun(): void {
   if (!run) return;
   renderCharacter();
@@ -214,20 +242,8 @@ function renderRun(): void {
   }
   renderWorld();
   show(cards, run.phase === 'level-up');
-  if (run.phase === 'level-up') {
-    cards.replaceChildren();
-    const heading = document.createElement('div'); heading.className = 'level-up-heading';
-    const title = document.createElement('h3'); title.textContent = 'Level up';
-    const hint = document.createElement('span'); hint.textContent = 'Choose upgrade below to continue:';
-    heading.append(title, hint);
-    const options = document.createElement('div'); options.className = 'upgrade-options';
-    for (const card of run.pendingCards) {
-      const button = document.createElement('button'); button.className = 'upgrade-card'; button.type = 'button'; button.innerHTML = `${upgradeIcons[card.id] ?? icons.power}<span class="upgrade-copy"><strong>${card.label}</strong><small>${upgradeHints[card.id] ?? 'Improve your run'}</small></span>`;
-      button.addEventListener('click', () => { if (run) { chooseUpgrade(run, card.id); renderRun(); } });
-      options.append(button);
-    }
-    cards.append(heading, options);
-  }
+  if (run.phase === 'level-up') renderUpgradeCards();
+  else renderedUpgradeSignature = '';
 }
 
 function formatUpgrade(id: string): string {
@@ -348,6 +364,6 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
     if (run?.summary && !summaryScreen.classList.contains('hidden')) renderSummary(run.summary, progress.gold);
   }
 });
-document.querySelector<HTMLButtonElement>('#share-card')!.addEventListener('click', () => { if (run?.summary) downloadShareCard(run.summary); });
+document.querySelector<HTMLButtonElement>('#share-card')!.addEventListener('click', () => { if (run?.summary) downloadShareCard(run.summary, progress.gold); });
 renderGuildStatus();
 vscodeApi?.postMessage({ version: 1, type: 'READY' });

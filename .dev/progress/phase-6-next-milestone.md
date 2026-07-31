@@ -2,7 +2,7 @@
 
 Status: **implementation in progress; Step 6.0 contract freeze recorded in [phase-6-contract.md](../decisions/phase-6-contract.md)**.
 
-This plan follows the execution rules and step-note format in [PROJECT_MANAGEMENT.md](../PROJECT_MANAGEMENT.md). It is the next scoped milestone after the `0.1.0` MVP release gate. It does not expand the stage, add DLC, add real telemetry, import third-party art, or change the map renderer.
+This plan follows the execution rules and step-note format in [PROJECT_MANAGEMENT.md](../PROJECT_MANAGEMENT.md). It is the next scoped milestone after the `0.1.0` MVP release gate. It does not expand the stage, add DLC, add real telemetry, import third-party art, or redesign the map renderer.
 
 ## User objectives
 
@@ -14,11 +14,11 @@ This plan follows the execution rules and step-note format in [PROJECT_MANAGEMEN
 ## Evidence snapshot
 
 - The MVP source is implemented on `agent/token-guild-mvp-ui`; this milestone adds the structured summary, schema-2 hero records, source-broken-down gold ledger, serialized host IPC handling, and focused tests without changing the map renderer or MVP scope.
-- Current checks pass: `npm ci`, `npm run lint`, `npm run typecheck`, `npm test` (32 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), `npm run package`, and `npm audit --omit=dev --audit-level=high` (0 production vulnerabilities). The E2E harness opens the webview but does not click through its DOM.
+- Current checks pass: `npm run lint`, `npm run typecheck`, `npm test` (34 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), and `npm run package` (57.53 KB). The E2E harness opens the webview but does not click through its DOM.
 - The summary now has outcome, hero/level, duration, tokens/source/accuracy, run gold, Guild wallet, spawned/defeated counts, gold breakdown, upgrades, damage rows, empty states, and local PNG export fields.
 - `RunSummary` owns the privacy-safe aggregate contract; `PersistedProgress.heroRecords` owns highest reached hero levels; the host's idempotent reward operation owns Guild wallet updates.
 - Selector options render `Hero - Level N` with accessible text stating that N is the best run level and new runs start at Level 1.
-- Ordinary enemy gold credits at defeat. Boss gold is claimed once at defeat; the yellow `gold-chest` marker has value 0 and cannot double-credit. Run gold and Guild wallet remain separate until host persistence.
+- Ordinary enemy and boss gold remain pending map pickups until collection. Ordinary coins award +1 and the boss chest awards +100 exactly once when the hero reaches them; run gold and Guild wallet remain separate until host persistence.
 - PM `Current status` now reflects active MVP implementation and Phase 6 refinement rather than the old documentation-only state.
 
 ## Research and product alignment
@@ -61,7 +61,7 @@ Scope: `.dev/progress/phase-6-next-milestone.md`, `src/game/types.ts`, `src/shar
 Risks: inventing persistent character progression or changing reward semantics without a migration and balance rule.  
 Acceptance: D1-D3 are recorded as explicit decisions; every new field has an owner, default, validation rule, persistence behavior, and export/privacy classification.  
 Checks: `npm run typecheck`; focused schema/state tests; review the diff before any UI implementation.  
-Result: pass. Contract decisions are recorded in [phase-6-contract.md](../decisions/phase-6-contract.md); schema-2 types/validation, legacy/future recovery helpers, reward payload validation, and simulation summary fields are implemented. `npm run typecheck`, `npm run test:synthetic`, and `npm test` pass (32 tests).
+Result: pass. Contract decisions are recorded in [phase-6-contract.md](../decisions/phase-6-contract.md); schema-2 types/validation, legacy/future recovery helpers, reward payload validation, and simulation summary fields are implemented. `npm run typecheck`, `npm run test:synthetic`, and `npm test` pass (34 tests).
 Follow-up: Step 6.1 structured summary UI/export is in progress.
 
 ### Step 6.1 - redesign the run summary
@@ -106,20 +106,20 @@ Follow-up: Step 6.3 gold ledger and runtime feedback review.
 ### Step 6.3 - make gold visible and correct
 
 Step: `6.3` - reward ledger and feedback  
-Objective: show gold inflow during the run and reconcile it in the summary without changing the map appearance.  
+Objective: show gold inflow during the run and reconcile it in the summary while making pending gold pickups visible.
 Dependencies: Step 6.0 D2; Step 6.1 summary model.  
 Scope: `src/game/types.ts`, `src/game/simulation.ts`, `src/game/telemetryMapping.ts`, `src/webview/main.ts`, `src/webview/style.css`, tests, and share-card fields if approved.  
 Risks: boss reward double counting; confusing gold pickup visuals with XP dots; host/webview duplicate reward messages.  
 Acceptance:
 
-- Run HUD shows current run gold and a labeled gold icon/tooltip; the map stays visually unchanged.
+- Run HUD shows current run gold and a labeled gold icon/tooltip; pending coins/chests are visibly distinct from XP drops.
 - Gold pickup/reward feedback distinguishes gold from XP and names the source (`enemy`, `boss chest`, or other approved source).
 - Ordinary kills, boss chest collection, defeat, victory, summary reopen, and duplicate `RECORD_RUN_REWARD` paths each have a deterministic ledger assertion.
 - The final summary shows run gold earned and persisted Guild wallet total separately.
 - Existing Guild Might purchase behavior remains correct after reward reconciliation.
 
 Checks: table-driven ledger tests; boss-chest no-double-count regression; reward idempotency tests; focused UI/source-label test; full `npm test`; E2E smoke run.  
-Result: pass. Run-local gold is now source-broken down in the HUD and summary; ordinary defeats credit once, boss defeat uses a one-time claim with a non-currency marker, completion telemetry shares the same guard, and host rewards remain idempotent. Focused ledger tests and the full 30-test suite pass.
+Result: pass. Run-local gold is now source-broken down in the HUD and summary; ordinary coins and the boss chest remain pending until collection, each collection credits once, completion telemetry keeps its separate one-time guard, and host rewards remain idempotent. Focused ledger tests and the full 34-test suite pass.
 Follow-up: Step 6.4 integrated runtime/release gate.
 
 ### Step 6.4 - milestone runtime review and release gate
@@ -138,7 +138,7 @@ Acceptance:
 - Evidence is recorded in `.dev/progress/phase-6-next-milestone.md` and the PM checkboxes are updated only for verified criteria.
 
 Checks: full regression suite, isolated VS Code install/smoke, `vsce ls --tree`, package-size check, and source/diff review against the referenced image.
-Result: pass for the automated release gate. `npm ci`, lint, typecheck, 32 unit tests, build, E2E (2/2 host tests), package, `vsce ls --tree`, package size (53.13 KB), and production-only audit (0 vulnerabilities) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, upgrades, gold sources, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
+Result: pass for the automated release gate. Lint, typecheck, 34 unit tests, build, E2E (2/2 host tests), and package (57.53 KB) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, stable upgrade rendering, collected/pending gold sources, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
 Follow-up: package is ready for review; keep the manual narrow-sidebar playthrough as the next human smoke check.
 
 ## QA matrix

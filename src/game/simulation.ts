@@ -192,29 +192,36 @@ export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0)
   for (const enemy of dead) {
     state.enemiesDefeated += 1;
     if (enemy.isBoss) {
-      grantBossReward(state);
-      // The marker communicates the boss reward source; the reward was already
-      // claimed at defeat, so pickup collection must not credit it again.
-      state.pickups.push({ id: state.nextEntityId++, kind: 'gold-chest', x: enemy.x, y: enemy.y, value: 0 });
+      // Gold is owned by pickup collection. The chest is deliberately pending
+      // until the hero reaches it, so the map and ledger cannot disagree.
+      state.pickups.push({ id: state.nextEntityId++, kind: 'gold-chest', x: enemy.x, y: enemy.y, value: 100 });
     } else {
-      awardGold(state, 'enemyKills', 1);
       state.pickups.push({ id: state.nextEntityId++, kind: 'xp-shard', x: enemy.x, y: enemy.y, value: 1 });
+      state.pickups.push({ id: state.nextEntityId++, kind: 'gold-coin', x: enemy.x, y: enemy.y, value: 1 });
     }
   }
   state.enemies = state.enemies.filter((enemy) => enemy.hp > 0);
-  if (state.bossSpawned && !state.enemies.some((enemy) => enemy.isBoss)) {
-    finishRun(state, 'victory');
-    return state;
-  }
-
   const collected: PickupState[] = [];
   for (const pickup of state.pickups) {
     if (distance(pickup, state.hero) <= state.hero.stats.magnet) {
-      if (pickup.kind !== 'gold-chest') grantXp(state, pickup.value);
+      if (pickup.kind === 'gold-chest') {
+        if (!state.bossRewardClaimed) {
+          state.bossRewardClaimed = true;
+          awardGold(state, 'bossChest', pickup.value);
+        }
+      } else if (pickup.kind === 'gold-coin') {
+        awardGold(state, 'enemyKills', pickup.value);
+      } else {
+        grantXp(state, pickup.value);
+      }
       collected.push(pickup);
     }
   }
   state.pickups = state.pickups.filter((pickup) => !collected.includes(pickup));
+  if (state.phase === 'dungeon' && state.bossSpawned && !state.enemies.some((enemy) => enemy.isBoss) && !state.pickups.some((pickup) => pickup.kind === 'gold-chest')) {
+    finishRun(state, 'victory');
+    return state;
+  }
   return state;
 }
 

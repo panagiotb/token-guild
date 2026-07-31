@@ -1,6 +1,6 @@
 :root { color-scheme: dark; font-family: system-ui, sans-serif; --guild-crimson: #a94458; --guild-crimson-soft: #552632; --guild-crimson-muted: #7a3948; }
 body { margin: 0; background: var(--vscode-sideBar-background, #171717); color: var(--vscode-foreground, #eee); }
-.guild-shell { display: grid; gap: .85rem; padding: .75rem; max-width: 420px; }
+.guild-shell { display: grid; gap: .85rem; width: 100%; max-width: 520px; box-sizing: border-box; margin: 0 auto; padding: .75rem; }
 .guild-header, .run-heading, .hud { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .guild-header { align-items: center; min-height: 36px; padding: .4rem .55rem; border: 1px solid color-mix(in srgb, var(--guild-crimson) 65%, var(--vscode-panel-border, #444)); border-radius: 6px; background: color-mix(in srgb, var(--vscode-sideBar-background, #171717) 88%, var(--guild-crimson-soft)); }
 .guild-header h1 { margin: 0; font-size: 1rem; line-height: 1.1; letter-spacing: .02em; }
@@ -9,9 +9,10 @@ body { margin: 0; background: var(--vscode-sideBar-background, #171717); color: 
 .run-heading h2 { margin: 0; text-align: center; }
 .screen { display: grid; gap: .6rem; }
 .hidden { display: none !important; }
-.map-frame { position: relative; width: 100%; max-width: 320px; }
-canvas { display: block; width: 100%; max-width: 320px; image-rendering: pixelated; border: 1px solid var(--vscode-panel-border, #444); }
-.map-hud { position: absolute; top: .45rem; left: .45rem; display: flex; align-items: center; gap: .3rem; }
+.map-shell { width: 100%; max-width: 520px; margin: 0 auto; }
+.map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; margin-bottom: .35rem; }
+.map-frame { width: 100%; }
+canvas { display: block; width: 100%; max-width: none; height: auto; image-rendering: pixelated; border: 1px solid var(--vscode-panel-border, #444); }
 .map-counter { display: inline-flex; align-items: center; gap: .22rem; min-height: 24px; padding: .18rem .3rem; color: #e7e2ee; background: rgb(10 13 22 / 78%); border: 1px solid rgb(255 255 255 / 16%); border-radius: 4px; font-size: .68rem; font-family: ui-monospace, monospace; }
 .map-counter strong { font-weight: 700; }
 .map-counter .counter-icon, .enemy-counter .counter-icon { display: inline-flex; }
@@ -22,7 +23,7 @@ select { width: 100%; box-sizing: border-box; padding: .4rem .5rem; color: inher
 output { color: var(--vscode-descriptionForeground, #aaa); font-size: .8rem; }
 .cards { display: grid; gap: .45rem; }
 .upgrade-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .35rem; }
-.upgrade-card { min-width: 0; min-height: 56px; display: flex; align-items: center; gap: .45rem; text-align: left; padding: .45rem; background: var(--vscode-button-secondaryBackground, #303030); border: 1px solid var(--vscode-panel-border, #444); }
+.upgrade-card { min-width: 0; min-height: 56px; display: flex; align-items: center; gap: .45rem; text-align: left; padding: .45rem; background: var(--vscode-button-secondaryBackground, #303030); border: 1px solid var(--vscode-panel-border, #444); transition: none; }
 .upgrade-card:hover { background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground, #454545) 82%, var(--guild-crimson-soft)); border-color: var(--guild-crimson-muted); }
 .upgrade-card svg, .primary-action svg, .secondary-action svg { flex: 0 0 auto; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .upgrade-copy { min-width: 0; display: grid; gap: .15rem; }
@@ -56,6 +57,9 @@ output { color: var(--vscode-descriptionForeground, #aaa); font-size: .8rem; }
 .enemy-counters { display: inline-flex; align-items: center; gap: .3rem; }
 .enemy-counter { display: inline-flex; align-items: center; gap: .2rem; padding: .18rem .28rem; color: var(--vscode-descriptionForeground, #aaa); border: 1px solid var(--vscode-panel-border, #444); border-radius: 4px; font-family: ui-monospace, monospace; font-size: .67rem; }
 .enemy-counter:hover { color: #e5a8b3; border-color: var(--guild-crimson-muted); }
+.enemy-counter { position: relative; cursor: help; }
+.enemy-counter::after { content: attr(data-tooltip); position: absolute; left: 50%; bottom: calc(100% + .35rem); z-index: 5; max-width: 14rem; padding: .3rem .4rem; color: #f4f0ff; background: #211922; border: 1px solid var(--guild-crimson-muted); border-radius: 4px; box-shadow: 0 4px 14px rgb(0 0 0 / 35%); font-family: system-ui, sans-serif; font-size: .68rem; line-height: 1.2; white-space: nowrap; opacity: 0; pointer-events: none; }
+.enemy-counter:hover::after, .enemy-counter:focus-visible::after { opacity: 1; }
 .gold-info { display: inline-flex; align-items: center; gap: .25rem; flex: 0 0 auto; padding: .2rem .35rem; color: #e4bd57; background: transparent; border-color: color-mix(in srgb, #e4bd57 45%, var(--vscode-panel-border, #444)); font-size: .68rem; }
 .gold-info:hover { background: color-mix(in srgb, #e4bd57 12%, transparent); }
 .gold-info svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -106,5 +110,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .summary-rows span { color: var(--vscode-descriptionForeground, #bbb); border-color: var(--vscode-panel-border, #444); }
 .summary-chips .empty-state, .summary-rows .empty-state { color: var(--vscode-descriptionForeground, #aaa); border-style: dashed; }
 .summary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+.export-action { color: #f5d6dc; background: color-mix(in srgb, var(--guild-crimson-soft) 70%, var(--vscode-button-secondaryBackground, #303030)); border-color: var(--guild-crimson-muted); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%); font-weight: 600; }
+.export-action:hover { color: #fff3f5; background: color-mix(in srgb, var(--guild-crimson) 42%, var(--vscode-button-secondaryHoverBackground, #454545)); border-color: #b75a6d; }
 @media (max-width: 280px) { .upgrade-options, .guild-actions { grid-template-columns: 1fr; } }
 button:focus-visible { outline: 2px solid var(--vscode-focusBorder, #fff); outline-offset: 2px; }

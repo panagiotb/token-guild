@@ -34,7 +34,7 @@ describe('deterministic run simulation', () => {
     expect(run.enemies.length).toBe(1);
   });
 
-  it('credits a boss chest once and keeps its map marker non-currency', () => {
+  it('credits a boss chest once when the hero collects it', () => {
     const run = createRun('paladin', 23);
     run.hero.stats.hp = 1000;
     run.hero.stats.maxHp = 1000;
@@ -44,8 +44,41 @@ describe('deterministic run simulation', () => {
     expect(run.phase).toBe('summary');
     expect(run.gold).toBe(100);
     expect(run.goldBreakdown).toEqual({ enemyKills: 0, bossChest: 100 });
-    expect(run.pickups).toEqual([expect.objectContaining({ kind: 'gold-chest', value: 0 })]);
+    expect(run.pickups).toEqual([]);
     expect(run.summary?.gold).toBe(100);
+  });
+
+  it('keeps gold pending until a distant drop is collected', () => {
+    const run = createRun('paladin', 24);
+    run.hero.stats.hp = 1000;
+    run.hero.stats.maxHp = 1000;
+    run.bossSpawned = true;
+    run.enemies.push({ id: 99, kind: 'terminal_exit_boss', x: 120, y: 0, hp: 0, maxHp: 120, speed: 0, damage: 0, isBoss: true, isElite: false });
+    tick(run, 0.25, 0);
+    expect(run.phase).toBe('dungeon');
+    expect(run.gold).toBe(0);
+    expect(run.pickups).toEqual([expect.objectContaining({ kind: 'gold-chest', value: 100 })]);
+    run.hero.x = run.pickups[0]!.x;
+    tick(run, 0.25, 0);
+    expect(run.phase).toBe('summary');
+    expect(run.gold).toBe(100);
+    expect(run.pickups).toEqual([]);
+  });
+
+  it('credits ordinary enemy gold only when its coin is collected', () => {
+    const collected = createRun('warrior', 25);
+    collected.enemies.push({ id: 1, kind: 'syntax_specter', x: 0, y: 0, hp: 0, maxHp: 28, speed: 0, damage: 0, isBoss: false, isElite: false });
+    tick(collected, 0.25, 0);
+    expect(collected.gold).toBe(1);
+    expect(collected.xp).toBe(1);
+    expect(collected.pickups).toEqual([]);
+
+    const pending = createRun('warrior', 26);
+    pending.enemies.push({ id: 1, kind: 'syntax_specter', x: 100, y: 0, hp: 0, maxHp: 28, speed: 0, damage: 0, isBoss: false, isElite: false });
+    tick(pending, 0.25, 0);
+    expect(pending.gold).toBe(0);
+    expect(pending.xp).toBe(0);
+    expect(pending.pickups).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'xp-shard', value: 1 }), expect.objectContaining({ kind: 'gold-coin', value: 1 })]));
   });
 
   it('applies persistent Guild upgrades at run start', () => {
@@ -62,6 +95,7 @@ describe('deterministic run simulation', () => {
     const run = createRun('warrior', 7);
     run.hero.stats.hp = 10000;
     run.hero.stats.maxHp = 10000;
+    run.hero.stats.magnet = 1000;
     let elapsed = 0;
     while (run.phase !== 'summary' && elapsed < getBossTimeSeconds() + 90) {
       if (run.phase === 'level-up') chooseUpgrade(run, run.pendingCards[0]?.id ?? 'heal');
@@ -80,12 +114,13 @@ describe('deterministic run simulation', () => {
     expect(summary.enemiesSpawned).toBe(run.enemiesSpawned);
     expect(summary.gold).toBe(summary.goldBreakdown.enemyKills + summary.goldBreakdown.bossChest);
     expect(summary.goldBreakdown.bossChest).toBe(100);
-    expect(run.pickups.filter((pickup) => pickup.kind === 'gold-chest').every((pickup) => pickup.value === 0)).toBe(true);
+    expect(run.pickups.filter((pickup) => pickup.kind === 'gold-chest')).toEqual([]);
   });
 
   it('keeps the entity pool bounded during a five-minute fixture', () => {
     const run = createRun('paladin', 99);
     run.hero.stats.hp = 100000; run.hero.stats.maxHp = 100000;
+    run.hero.stats.magnet = 1000;
     for (let index = 0; index < 1200; index += 1) {
       if (run.phase === 'summary') break;
       if (run.phase === 'level-up') chooseUpgrade(run, run.pendingCards[0]?.id ?? 'heal');

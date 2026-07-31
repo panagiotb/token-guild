@@ -6,6 +6,7 @@ describe('MVP Guild-to-run scenario', () => {
   it('completes a deterministic run and persists its reward once', async () => {
     const run = createRun('warrior', 123);
     run.hero.stats.hp = 100000; run.hero.stats.maxHp = 100000;
+    run.hero.stats.magnet = 1000;
     for (let index = 0; index < 800 && run.phase !== 'summary'; index += 1) {
       if (run.phase === 'level-up') chooseUpgrade(run, run.pendingCards[0]?.id ?? 'heal');
       applyTokenInput(run, { count: 3, tokensPerSecond: 40 });

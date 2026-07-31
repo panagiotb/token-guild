@@ -5,8 +5,8 @@ This document is the execution plan for Token Guild. It defines scope, sequencin
 ## Current status
 
 - **Lifecycle:** active MVP implementation and Phase 6 refinement
-- **Implementation:** MVP `0.1.0` vertical slice, UI, persistence, telemetry fixtures, and release tooling are implemented; Phase 6 summary/progression/reward refinements are in progress
-- **Next milestone:** Phase 6 structured summary, hero best-level preview, and reward-ledger review
+- **Implementation:** MVP `0.1.0` vertical slice and Phase 6 summary/progression/reward refinements pass the automated gate; manual narrow-sidebar review remains
+- **Next milestone:** manual narrow-sidebar playthrough and screenshot review before any post-MVP work
 - **Release target:** MVP `0.1.0`
 - **Autonomy defaults:** [.dev/AUTONOMY_CONFIG.json](AUTONOMY_CONFIG.json)
 
@@ -350,7 +350,8 @@ The scoped follow-up plan and decision record live in [phase-6-next-milestone.md
 - [x] Freeze the privacy-safe summary contract, hero best-level semantics, schema-2 migration, and single-owner gold ledger.
 - [x] Implement structured victory/defeat summary, local export, loadout/damage empty states, and Guild-wallet reconciliation.
 - [x] Show authoritative `Hero - Level N` best-run labels while keeping new runs at Level 1.
-- [x] Add labeled run-gold HUD feedback and prevent boss-marker double counting; serialize host reward IPC.
+- [x] Add labeled run-gold HUD feedback, make coin/chest collection authoritative, prevent boss-marker double counting, and serialize host reward IPC.
+- [x] Stabilize level-up button rendering, align the local PNG export with the on-screen summary, and place responsive map counters/tooltips on the shared panel width.
 - [x] Pass locked install, lint, typecheck, unit suite, build, host smoke, package, package audit, and production-only dependency audit.
 - [ ] Complete the manual narrow-sidebar playthrough/screenshot review; the current automated host harness cannot drive webview DOM controls.
 
