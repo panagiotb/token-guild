@@ -33,7 +33,6 @@ export interface PersistedProgress {
 export type HostToWebviewMessage =
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'TOKEN_STREAM'; readonly payload: TokenStreamEvent }
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'LOAD_PROGRESS'; readonly payload: PersistedProgress }
-  | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'TOGGLE_STEALTH'; readonly payload: { readonly enabled: boolean } }
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'RUN_SUMMARY'; readonly payload: { readonly gold: number; readonly tokens: number } };
 
 export type WebviewToHostMessage =

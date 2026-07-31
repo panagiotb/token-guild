@@ -6,6 +6,7 @@ import { AudioManager } from './audio';
 import { downloadShareCard } from './shareCard';
 import { formatHeroOptionDescription, formatHeroOptionLabel } from './heroProgress';
 import { buildSummaryViewModel } from './summaryModel';
+import { formatPauseTitle } from './pause';
 import type { HeroId, RunState, RunSummary } from '../game/types';
 import classes from '../game/data/classes.json';
 import type { HostToWebviewMessage, PersistedProgress } from '../shared/types';
@@ -18,7 +19,8 @@ const heroNames: Record<HeroId, string> = Object.fromEntries(classes.map((hero) 
 const icons = {
   soundOn: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Zm12.5 0a5 5 0 0 1 0 6m2.5-8.5a8.5 8.5 0 0 1 0 11"/></svg>',
   soundOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 16M4 9v6h4l5 4V5L8 9H4Z"/></svg>',
-  stealth: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M17 5v14"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>',
   run: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 4 12 8-12 8V4Z"/></svg>',
   might: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.2 5.2L20 10l-4.3 3.7 1.3 5.8-5-3.1-5 3.1 1.3-5.8L4 10l5.8-1.8L12 3Z"/></svg>',
   weapon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 9-9m-6 7-2-2m5-7 2 2 6-6a2 2 0 0 0-2-2l-6 6Zm8-8 2 2"/></svg>',
@@ -42,7 +44,8 @@ if (!app) throw new Error('Token Guild root element is missing');
 
 app.innerHTML = `
   <section class="guild-shell" aria-labelledby="title">
-    <header class="guild-header"><h1 id="title">Token Guild</h1><div class="header-actions" aria-label="Display settings"><button class="icon-button" type="button" id="mute" title="Mute sound" aria-label="Mute sound" aria-pressed="false">${icons.soundOn}</button><button class="icon-button" type="button" id="stealth" title="Toggle stealth view" aria-label="Toggle stealth view" aria-pressed="false">${icons.stealth}</button></div></header>
+    <header class="guild-header"><h1 id="title">Token Guild</h1><div class="header-actions" aria-label="Audio and run controls"><button class="icon-button" type="button" id="mute" title="Mute sound" aria-label="Mute sound" aria-pressed="false">${icons.soundOn}</button><button class="icon-button" type="button" id="pause-toggle" title="Pause Token Guild" aria-label="Pause Token Guild">${icons.pause}</button></div></header>
+    <div id="guild-content">
     <section id="guild-screen" class="screen" aria-labelledby="guild-title">
       <h2 id="guild-title">Guild Hall</h2><p>Choose a hero for the Code Dungeon.</p>
       <label for="hero-select">Hero</label><select id="hero-select"></select>
@@ -72,6 +75,8 @@ app.innerHTML = `
       </section>
       <div class="summary-actions"><button class="secondary-action export-action" type="button" id="share-card">${icons.download}<span>Export summary PNG</span></button><button class="primary-action" type="button" id="return-guild">Return to Guild</button></div>
     </section>
+    </div>
+    <section id="pause-screen" class="pause-screen hidden" aria-live="polite"><h1 id="pause-title">Paused · Synthetic tokens spent: 0</h1></section>
   </section>
 `;
 
@@ -80,6 +85,10 @@ const buyMightButton = document.querySelector<HTMLButtonElement>('#buy-might')!;
 const guildScreen = document.querySelector<HTMLElement>('#guild-screen')!;
 const runScreen = document.querySelector<HTMLElement>('#run-screen')!;
 const summaryScreen = document.querySelector<HTMLElement>('#summary-screen')!;
+const guildContent = document.querySelector<HTMLElement>('#guild-content')!;
+const pauseScreen = document.querySelector<HTMLElement>('#pause-screen')!;
+const pauseTitle = document.querySelector<HTMLElement>('#pause-title')!;
+const pauseToggle = document.querySelector<HTMLButtonElement>('#pause-toggle')!;
 const cards = document.querySelector<HTMLElement>('#cards')!;
 const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas')!;
 const drawingContext = canvas.getContext('2d');
@@ -99,6 +108,7 @@ let activeRunId: string | undefined;
 const keys = new Set<string>();
 let previousPhase = 'guild';
 let renderedUpgradeSignature = '';
+let paused = false;
 
 function labelForId(value: string | undefined): string {
   return value ? value.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ') : 'Unknown';
@@ -120,6 +130,25 @@ function setCounter(id: string, value: number, label: string): void {
 }
 
 function show(element: HTMLElement, visible: boolean): void { element.classList.toggle('hidden', !visible); }
+
+function renderPauseControl(): void {
+  pauseToggle.setAttribute('aria-pressed', String(paused));
+  pauseToggle.setAttribute('aria-label', paused ? 'Resume Token Guild' : 'Pause Token Guild');
+  pauseToggle.title = paused ? 'Resume Token Guild' : 'Pause Token Guild';
+  pauseToggle.innerHTML = paused ? icons.play : icons.pause;
+}
+
+function renderPauseScreen(): void {
+  pauseTitle.textContent = formatPauseTitle(run?.tokenSource ?? 'synthetic', run?.totalTokens ?? progress.totalTokens);
+}
+
+function setPaused(next: boolean): void {
+  paused = next;
+  show(guildContent, !paused);
+  show(pauseScreen, paused);
+  renderPauseScreen();
+  renderPauseControl();
+}
 
 function openDialog(dialog: HTMLDialogElement): void {
   if (typeof dialog.showModal === 'function') dialog.showModal();
@@ -296,11 +325,13 @@ function startRun(): void {
   run = createRun(heroSelect.value as HeroId, 0xdecafbad, progress.upgrades);
   activeRunId = `demo-${Date.now()}-${progress.runCount}`;
   previousPhase = 'guild';
+  setPaused(false);
   audioManager.playTone(440, 100);
   tokenBus = new TokenBus((event) => { if (run) applyTokenInput(run, event); });
   vscodeApi?.postMessage({ version: 1, type: 'START_RUN', payload: { heroId: run.heroId } });
   show(guildScreen, false); show(summaryScreen, false); show(runScreen, true); renderRun();
   loop = window.setInterval(() => {
+    if (paused) { renderPauseScreen(); return; }
     if (!run || run.phase !== 'dungeon') { renderRun(); return; }
     const direction = { x: 0, y: 0 };
     if (keys.has('arrowleft') || keys.has('a')) direction.x -= 1;
@@ -341,14 +372,10 @@ document.querySelector<HTMLButtonElement>('#mute')!.addEventListener('click', (e
   audioManager.setSettings(progress.settings); button.setAttribute('aria-pressed', String(muted)); button.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound'); button.title = muted ? 'Unmute sound' : 'Mute sound'; button.innerHTML = muted ? icons.soundOff : icons.soundOn;
   vscodeApi?.postMessage({ version: 1, type: 'SAVE_PROGRESS', payload: progress });
 });
+pauseToggle.addEventListener('click', () => setPaused(!paused));
 document.querySelector<HTMLButtonElement>('#return-guild')!.addEventListener('click', () => { show(summaryScreen, false); show(guildScreen, true); renderGuildStatus(); });
 document.addEventListener('keydown', (event) => { keys.add(event.key.toLowerCase()); });
 document.addEventListener('keyup', (event) => { keys.delete(event.key.toLowerCase()); });
-document.querySelector<HTMLButtonElement>('#stealth')!.addEventListener('click', (event) => {
-  const button = event.currentTarget as HTMLButtonElement;
-  const enabled = button.getAttribute('aria-pressed') !== 'true';
-  button.setAttribute('aria-pressed', String(enabled)); document.body.classList.toggle('stealth', enabled);
-});
 
 window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) => {
   const message = event.data;
@@ -359,9 +386,11 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
     const mute = document.querySelector<HTMLButtonElement>('#mute')!;
     mute.setAttribute('aria-pressed', String(progress.settings.muted)); mute.setAttribute('aria-label', progress.settings.muted ? 'Unmute sound' : 'Mute sound'); mute.title = progress.settings.muted ? 'Unmute sound' : 'Mute sound'; mute.innerHTML = progress.settings.muted ? icons.soundOff : icons.soundOn;
     renderGuildStatus();
+    if (paused) renderPauseScreen();
     if (run?.summary && !summaryScreen.classList.contains('hidden')) renderSummary(run.summary, progress.gold);
   }
 });
 document.querySelector<HTMLButtonElement>('#share-card')!.addEventListener('click', () => { if (run?.summary) downloadShareCard(run.summary, progress.gold); });
 renderGuildStatus();
+renderPauseControl();
 vscodeApi?.postMessage({ version: 1, type: 'READY' });

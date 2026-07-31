@@ -32,6 +32,11 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('id="enemy-spawned"');
     expect(main).toContain('id="enemy-defeated"');
     expect(main).toContain('id="enemy-active"');
+    expect(main).toContain('id="pause-toggle"');
+    expect(main).toContain('id="pause-screen"');
+    expect(main).toContain('id="guild-content"');
+    expect(main).toContain('formatPauseTitle');
+    expect(main).toContain('if (paused) { renderPauseScreen(); return; }');
     expect(main).toContain('class="map-toolbar"');
     expect(main).toContain('class="map-toolbar" aria-label="Dungeon counters"><span');
     expect(main).toContain('<h2 id="run-title">Code Dungeon</h2><button');

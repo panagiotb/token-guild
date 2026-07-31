@@ -14,8 +14,9 @@ This plan follows the execution rules and step-note format in [PROJECT_MANAGEMEN
 ## Evidence snapshot
 
 - The MVP source is implemented on `agent/token-guild-mvp-ui`; this milestone adds the structured summary, schema-2 hero records, source-broken-down gold ledger, serialized host IPC handling, and focused tests without changing the map renderer or MVP scope.
-- Current checks pass: `npm run lint`, `npm run typecheck`, `npm test` (34 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), and `npm run package` (57.62 KB). The E2E harness opens the webview but does not click through its DOM.
+- Current checks pass: `npm run lint`, `npm run typecheck`, `npm test` (36 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), and `npm run package` (58.25 KB). The E2E harness opens the webview but does not click through its DOM.
 - The summary now has outcome, hero/level, duration, tokens/source/accuracy, run gold, Guild wallet, spawned/defeated counts, gold breakdown, upgrades, damage rows, empty states, and local PNG export fields.
+- The run header now has pause/resume control; pause hides all content below the Token Guild header and shows only the synthetic-token total while the simulation loop is stopped.
 - `RunSummary` owns the privacy-safe aggregate contract; `PersistedProgress.heroRecords` owns highest reached hero levels; the host's idempotent reward operation owns Guild wallet updates.
 - Selector options render `Hero - Level N` with accessible text stating that N is the best run level and new runs start at Level 1.
 - Ordinary enemy gems and boss gold remain pending map pickups until collection. Each gem awards +1 XP and +1 gold; the boss chest awards +100 exactly once when the hero reaches it. Synthetic token input no longer grants XP; run gold and Guild wallet remain separate until host persistence.
@@ -61,7 +62,7 @@ Scope: `.dev/progress/phase-6-next-milestone.md`, `src/game/types.ts`, `src/shar
 Risks: inventing persistent character progression or changing reward semantics without a migration and balance rule.  
 Acceptance: D1-D3 are recorded as explicit decisions; every new field has an owner, default, validation rule, persistence behavior, and export/privacy classification.  
 Checks: `npm run typecheck`; focused schema/state tests; review the diff before any UI implementation.  
-Result: pass. Contract decisions are recorded in [phase-6-contract.md](../decisions/phase-6-contract.md); schema-2 types/validation, legacy/future recovery helpers, reward payload validation, and simulation summary fields are implemented. `npm run typecheck`, `npm run test:synthetic`, and `npm test` pass (34 tests).
+Result: pass. Contract decisions are recorded in [phase-6-contract.md](../decisions/phase-6-contract.md); schema-2 types/validation, legacy/future recovery helpers, reward payload validation, and simulation summary fields are implemented. `npm run typecheck`, `npm run test:synthetic`, and `npm test` pass (36 tests).
 Follow-up: Step 6.1 structured summary UI/export is in progress.
 
 ### Step 6.1 - redesign the run summary
@@ -81,7 +82,7 @@ Acceptance:
 - Keyboard focus order, contrast, reduced motion, and narrow-sidebar layout remain valid.
 
 Checks: focused summary/share-card tests; `npm run lint`; `npm run typecheck`; `npm test`; Extension Development Host run through victory and defeat paths where practical.  
-Result: pass. Structured victory/defeat summary markup, labeled stats, gold/wallet separation, loadout/damage empty states, keyboard-reachable actions, and privacy-safe local export are implemented. `npm run typecheck`, `npm run lint`, and `npm test` pass (32 tests); the Extension Development Host smoke still covers open/activation rather than DOM click-through.
+Result: pass. Structured victory/defeat summary markup, labeled stats, gold/wallet separation, loadout/damage empty states, keyboard-reachable actions, and privacy-safe local export are implemented. `npm run typecheck`, `npm run lint`, and `npm test` pass (36 tests); the Extension Development Host smoke still covers open/activation rather than DOM click-through.
 Follow-up: Step 6.2 authoritative hero level labels and migration QA.
 
 ### Step 6.2 - add hero level preview at run start
@@ -119,7 +120,7 @@ Acceptance:
 - Existing Guild Might purchase behavior remains correct after reward reconciliation.
 
 Checks: table-driven ledger tests; boss-chest no-double-count regression; reward idempotency tests; focused UI/source-label test; full `npm test`; E2E smoke run.  
-Result: pass. Run-local gold is now source-broken down in the HUD and summary; ordinary coins and the boss chest remain pending until collection, each collection credits once, completion telemetry keeps its separate one-time guard, and host rewards remain idempotent. Focused ledger tests and the full 34-test suite pass.
+Result: pass. Run-local gold is now source-broken down in the HUD and summary; enemy gems and the boss chest remain pending until collection, each collection credits once, completion telemetry keeps its separate one-time guard, and host rewards remain idempotent. Focused ledger tests and the full 36-test suite pass.
 Follow-up: Step 6.4 integrated runtime/release gate.
 
 ### Step 6.4 - milestone runtime review and release gate
@@ -138,7 +139,7 @@ Acceptance:
 - Evidence is recorded in `.dev/progress/phase-6-next-milestone.md` and the PM checkboxes are updated only for verified criteria.
 
 Checks: full regression suite, isolated VS Code install/smoke, `vsce ls --tree`, package-size check, and source/diff review against the referenced image.
-Result: pass for the automated release gate. Lint, typecheck, 34 unit tests, build, E2E (2/2 host tests), and package (57.62 KB) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, stable upgrade rendering, gem-owned XP/gold collection, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
+Result: pass for the automated release gate. Lint, typecheck, 36 unit tests, build, E2E (2/2 host tests), and package (58.25 KB) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, stable upgrade rendering, pause overlay formatting, gem-owned XP/gold collection, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
 Follow-up: package is ready for review; keep the manual narrow-sidebar playthrough as the next human smoke check.
 
 ## QA matrix

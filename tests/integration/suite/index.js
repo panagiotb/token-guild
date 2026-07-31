@@ -2,12 +2,11 @@ const assert = require('node:assert/strict');
 const vscode = require('vscode');
 
 suite('Token Guild extension', () => {
-  test('activates and registers the stealth command', async () => {
+  test('activates and registers the reset command', async () => {
     const extension = vscode.extensions.getExtension('evdaimon-games.token-guild');
     assert.ok(extension, 'extension should be discoverable');
     await extension.activate();
     const commands = await vscode.commands.getCommands(true);
-    assert.ok(commands.includes('tokenGuild.toggleStealth'));
     assert.ok(commands.includes('tokenGuild.resetProgress'));
   });
 

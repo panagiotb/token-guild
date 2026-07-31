@@ -7,6 +7,8 @@ body { margin: 0; background: var(--vscode-sideBar-background, #171717); color: 
 .header-actions { display: flex; gap: .25rem; }
 .screen { display: grid; gap: .6rem; }
 .hidden { display: none !important; }
+.pause-screen { min-height: 12rem; display: grid; place-items: center; text-align: center; }
+.pause-screen h1 { margin: 0; color: #e5a8b3; font-size: 1.15rem; line-height: 1.35; }
 .map-shell { width: 100%; max-width: 520px; margin: 0 auto; }
 .map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; margin-bottom: .35rem; }
 .map-toolbar h2 { flex: 1; min-width: 0; margin: 0; text-align: center; font-size: 1.1rem; white-space: nowrap; }
@@ -74,8 +76,6 @@ output { color: var(--vscode-descriptionForeground, #aaa); font-size: .8rem; }
 .dialog-close { float: right; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .controls { font-size: .8rem; opacity: .8; }
-body.stealth canvas, body.stealth .hud { opacity: .08; }
-body.stealth .guild-header::after { content: '[INFO] Context Buffer: OK'; font-family: monospace; color: #7fdbca; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 button { color: inherit; background: var(--vscode-button-secondaryBackground, #303030); border: 1px solid transparent; border-radius: 4px; padding: .42rem .6rem; cursor: pointer; }
 button:hover { background: var(--vscode-button-secondaryHoverBackground, #454545); }

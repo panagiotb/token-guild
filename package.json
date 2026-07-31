@@ -40,19 +40,8 @@
     },
     "commands": [
       {
-        "command": "tokenGuild.toggleStealth",
-        "title": "Token Guild: Toggle Stealth View"
-      },
-      {
         "command": "tokenGuild.resetProgress",
         "title": "Token Guild: Reset Progress"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "tokenGuild.toggleStealth",
-        "key": "ctrl+shift+h",
-        "when": "view == tokenGuild.guildView"
       }
     ],
     "configuration": {

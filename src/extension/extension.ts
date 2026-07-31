@@ -66,9 +66,6 @@ export function activate(context: vscode.ExtensionContext): void {
       new GuildViewProvider(context.extensionUri, state),
       { webviewOptions: { retainContextWhenHidden: false } }
     ),
-    vscode.commands.registerCommand('tokenGuild.toggleStealth', () => {
-      vscode.window.showInformationMessage('Token Guild stealth view will be available in the MVP shell.');
-    }),
     vscode.commands.registerCommand('tokenGuild.resetProgress', async () => {
       const confirmation = await vscode.window.showWarningMessage('Reset all Token Guild progress?', { modal: true }, 'Reset');
       if (confirmation === 'Reset') await state.reset();
