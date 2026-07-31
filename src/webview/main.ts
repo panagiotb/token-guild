@@ -25,7 +25,13 @@ const icons = {
   power: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"/></svg>',
   heal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20S4 15.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 6.5-8 11-8 11Z"/></svg>',
   hero: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c.6-4.2 2.9-6.5 7-6.5s6.4 2.3 7 6.5"/></svg>',
-  gold: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5c.4-.8 1.2-1.2 2.5-1.2 1.5 0 2.4.6 2.4 1.6 0 .9-.7 1.3-2.1 1.6-1.5.3-2.3.7-2.3 1.7 0 1.1 1 1.7 2.5 1.7 1.2 0 2.1-.4 2.6-1.2M12 7v10"/></svg>'
+  gold: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5c.4-.8 1.2-1.2 2.5-1.2 1.5 0 2.4.6 2.4 1.6 0 .9-.7 1.3-2.1 1.6-1.5.3-2.3.7-2.3 1.7 0 1.1 1 1.7 2.5 1.7 1.2 0 2.1-.4 2.6-1.2M12 7v10"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>',
+  tokens: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 7 4v10l-7 4-7-4V7l7-4Z"/><path d="m5 7 7 4 7-4M12 11v10"/></svg>',
+  enemy: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5a6 6 0 0 1 12 0v5.5l-3 2-3-1-3 1-3-2V9.5Z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><path d="M9 15h6"/></svg>',
+  spawned: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>',
+  defeated: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 6-6m-3-3 3 3m2-8 6 6m-3 3-3-3"/><path d="m4 20 4-1 9-9a2.8 2.8 0 0 0-4-4l-9 9-1 4Z"/></svg>',
+  active: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>'
 } as const;
 const upgradeIcons: Record<string, string> = { 'weapon-upgrade': icons.weapon, 'power-gauntlets': icons.power, heal: icons.heal };
 const upgradeHints: Record<string, string> = { 'weapon-upgrade': 'More damage', 'power-gauntlets': '+10% Might', heal: 'Restore 25% HP' };
@@ -44,14 +50,14 @@ app.innerHTML = `
       <dialog id="might-dialog" class="token-dialog"><form method="dialog"><h3>Guild Might</h3><p>Guild Might is a permanent between-run upgrade. Each rank costs 100 gold and adds 5% weapon damage to every future run.</p><ul><li>It persists when you return to the Guild or restart VS Code.</li><li>It affects weapon damage, not token counting or XP.</li><li>It is this MVP's simplified equivalent of a permanent meta-progression PowerUp.</li></ul><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="run-screen" class="screen hidden" aria-labelledby="run-title">
-      <div class="run-heading"><h2 id="run-title">Code Dungeon</h2><button class="token-info" type="button" id="token-info" title="Explain synthetic token flow">Synthetic tokens <span id="token-rate">12/s</span></button></div>
-      <canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas>
+      <div class="run-heading"><h2 id="run-title">Code Dungeon</h2></div>
+      <div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas><div class="map-hud" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div></div>
       <section class="character-panel" aria-labelledby="character-title">
         <div class="character-heading"><div class="character-portrait">${icons.hero}</div><div><h3 id="character-title">Character</h3><p id="character-role">Starting class</p></div><strong id="character-level">Lvl 1</strong></div>
         <div class="character-bars"><div class="bar-row"><span>HP</span><div id="hp-bar" class="stat-bar" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><output id="hp-value">100/100</output></div><div class="bar-row"><span>XP</span><div id="xp-bar" class="stat-bar xp" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><output id="xp-value">0 / 5</output></div></div>
         <div class="character-loadout"><span id="weapon-detail">Weapon</span><span id="passive-detail">Passive</span></div><div id="character-attributes" class="character-attributes" aria-label="Character attributes"></div><div id="character-upgrades" class="character-upgrades" aria-label="Run upgrades"></div>
       </section>
-      <div class="run-meta" id="run-meta" aria-live="polite"><span id="run-meta-copy"></span><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
+      <div class="run-meta" id="run-meta" aria-live="polite"><div class="enemy-counters" aria-label="Enemy counters"><span class="enemy-counter" id="enemy-spawned" title="Enemies spawned"><span class="counter-icon">${icons.spawned}</span><strong id="enemy-spawned-count">0</strong></span><span class="enemy-counter" id="enemy-defeated" title="Enemies defeated"><span class="counter-icon">${icons.defeated}</span><strong id="enemy-defeated-count">0</strong></span><span class="enemy-counter" id="enemy-active" title="Enemies currently active"><span class="counter-icon">${icons.active}</span><strong id="enemy-active-count">0</strong></span></div><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
       <div id="cards" class="cards hidden" aria-live="polite"></div>
       <p class="controls">Move with arrow keys or WASD. Synthetic tokens flow while the run is active.</p>
       <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 3 synthetic tokens every 250 ms, displayed as 12 tokens per second.</p><ul><li>Every token grants 1 XP.</li><li>Token throughput can modify combat; the fixture is intentionally steady.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
@@ -101,6 +107,15 @@ function labelForId(value: string | undefined): string {
 function setText(id: string, value: string): void {
   const element = document.querySelector<HTMLElement>(`#${id}`);
   if (element) element.textContent = value;
+}
+
+function setCounter(id: string, value: number, label: string): void {
+  setText(`${id}-count`, String(value));
+  const counter = document.querySelector<HTMLElement>(`#${id}`);
+  if (counter) {
+    counter.title = `${label}: ${value}`;
+    counter.setAttribute('aria-label', `${label}: ${value}`);
+  }
 }
 
 function show(element: HTMLElement, visible: boolean): void { element.classList.toggle('hidden', !visible); }
@@ -179,8 +194,15 @@ function renderCharacter(): void {
 function renderRun(): void {
   if (!run) return;
   renderCharacter();
-  setText('run-meta-copy', `${Math.floor(run.elapsedSeconds)}s · Spawned ${run.enemiesSpawned} · Defeated ${run.enemiesDefeated} · Active ${run.enemies.length} · XP ${Math.floor(run.xp)}`);
-  setText('token-rate', `12/s · ${run.totalTokens} total`);
+  setText('clock-hud', `${Math.floor(run.elapsedSeconds)}s`);
+  setText('token-hud', String(run.totalTokens));
+  const clockCounter = document.querySelector<HTMLElement>('#clock-counter');
+  if (clockCounter) { clockCounter.title = `Elapsed time: ${Math.floor(run.elapsedSeconds)} seconds`; clockCounter.setAttribute('aria-label', `Elapsed time: ${Math.floor(run.elapsedSeconds)} seconds`); }
+  const tokenInfo = document.querySelector<HTMLButtonElement>('#token-info');
+  if (tokenInfo) tokenInfo.title = `Synthetic tokens, exact count: ${run.totalTokens}; click for details`;
+  setCounter('enemy-spawned', run.enemiesSpawned, 'Enemies spawned');
+  setCounter('enemy-defeated', run.enemiesDefeated, 'Enemies defeated');
+  setCounter('enemy-active', run.enemies.length, 'Enemies currently active');
   setText('gold-hud', String(run.gold));
   setText('gold-breakdown-dialog', `Current run: ${run.gold} gold · Enemy defeats ${run.goldBreakdown.enemyKills} · Boss chest ${run.goldBreakdown.bossChest}`);
   const goldInfo = document.querySelector<HTMLButtonElement>('#gold-info');
