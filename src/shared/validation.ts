@@ -1,3 +1,4 @@
+import { PROGRESS_SCHEMA_VERSION } from './types';
 import type { PersistedProgress, TokenStreamEvent, WebviewToHostMessage } from './types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -6,6 +7,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isSafeKey(value: string, maxLength: number): boolean {
+  return value.length > 0 && value.length <= maxLength && value !== '__proto__' && value !== 'constructor' && value !== 'prototype';
 }
 
 export function validateTokenStreamEvent(value: unknown): TokenStreamEvent {
@@ -25,14 +30,19 @@ export function validateTokenStreamEvent(value: unknown): TokenStreamEvent {
 }
 
 export function validateProgress(value: unknown): PersistedProgress {
-  if (!isRecord(value) || value.schemaVersion !== 1 || !isFiniteNumber(value.gold) || !isFiniteNumber(value.runCount) || !isFiniteNumber(value.totalTokens) || !Array.isArray(value.unlockedHeroes) || !Array.isArray(value.completedRunIds) || !isRecord(value.upgrades) || !isRecord(value.settings)) {
+  if (!isRecord(value) || value.schemaVersion !== PROGRESS_SCHEMA_VERSION || !isFiniteNumber(value.gold) || !isFiniteNumber(value.runCount) || !isFiniteNumber(value.totalTokens) || !Array.isArray(value.unlockedHeroes) || !Array.isArray(value.completedRunIds) || !isRecord(value.upgrades) || !isRecord(value.heroRecords) || !isRecord(value.settings)) {
     throw new Error('Invalid persisted progress');
   }
-  if (value.gold < 0 || value.runCount < 0 || value.totalTokens < 0 || value.unlockedHeroes.some((hero) => typeof hero !== 'string' || hero.length === 0 || hero.length > 64) || value.completedRunIds.some((runId) => typeof runId !== 'string' || runId.length === 0 || runId.length > 128)) {
+  if (value.gold < 0 || value.runCount < 0 || value.totalTokens < 0 || value.unlockedHeroes.some((hero) => typeof hero !== 'string' || !isSafeKey(hero, 64)) || value.completedRunIds.some((runId) => typeof runId !== 'string' || runId.length === 0 || runId.length > 128)) {
     throw new Error('Persisted progress contains invalid values');
   }
-  for (const rank of Object.values(value.upgrades)) {
-    if (!isFiniteNumber(rank) || rank < 0 || !Number.isInteger(rank)) throw new Error('Invalid upgrade rank');
+  for (const [upgradeId, rank] of Object.entries(value.upgrades)) {
+    if (!isSafeKey(upgradeId, 64) || !isFiniteNumber(rank) || rank < 0 || !Number.isInteger(rank)) throw new Error('Invalid upgrade rank');
+  }
+  for (const [heroId, record] of Object.entries(value.heroRecords)) {
+    if (!isSafeKey(heroId, 64) || !isRecord(record) || !isFiniteNumber(record.highestLevel) || !Number.isInteger(record.highestLevel) || record.highestLevel < 1 || record.highestLevel > 999) {
+      throw new Error('Invalid hero progression record');
+    }
   }
   if (new Set(value.completedRunIds).size !== value.completedRunIds.length) throw new Error('Duplicate completed run ID');
   if (typeof value.settings.muted !== 'boolean' || !isFiniteNumber(value.settings.volume) || value.settings.volume < 0 || value.settings.volume > 1) throw new Error('Invalid audio settings');
@@ -46,7 +56,9 @@ export function validateWebviewMessage(value: unknown): WebviewToHostMessage {
   if (value.type === 'START_RUN' && (!isRecord(value.payload) || typeof value.payload.heroId !== 'string' || value.payload.heroId.length > 64)) throw new Error('Invalid start-run payload');
   if (value.type === 'RECORD_RUN_REWARD') {
     const reward = value.payload;
-    if (!isRecord(reward) || typeof reward.runId !== 'string' || !isFiniteNumber(reward.gold) || reward.gold < 0 || !isFiniteNumber(reward.tokens) || reward.tokens < 0) throw new Error('Invalid run reward payload');
+    if (!isRecord(reward) || typeof reward.runId !== 'string' || reward.runId.length === 0 || reward.runId.length > 128 || !isFiniteNumber(reward.gold) || reward.gold < 0 || !isFiniteNumber(reward.tokens) || reward.tokens < 0) throw new Error('Invalid run reward payload');
+    const hasHeroProgress = reward.heroId !== undefined || reward.level !== undefined;
+    if (hasHeroProgress && (typeof reward.heroId !== 'string' || reward.heroId.length === 0 || reward.heroId.length > 64 || !isFiniteNumber(reward.level) || !Number.isInteger(reward.level) || reward.level < 1 || reward.level > 999)) throw new Error('Invalid hero progression reward');
   }
   return value as WebviewToHostMessage;
 }

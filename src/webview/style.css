@@ -42,7 +42,12 @@ output { color: var(--vscode-descriptionForeground, #aaa); font-size: .8rem; }
 .character-upgrades { display: flex; flex-wrap: wrap; gap: .35rem; }
 .character-upgrades span { color: #e5a8b3; border-color: color-mix(in srgb, var(--guild-crimson) 55%, var(--vscode-panel-border, #444)); }
 .character-upgrades .no-upgrades { color: var(--vscode-descriptionForeground, #aaa); border-style: dashed; }
-.run-meta { min-height: 1rem; color: var(--vscode-descriptionForeground, #aaa); font-size: .7rem; }
+.run-meta { min-height: 1rem; display: flex; align-items: center; justify-content: space-between; gap: .45rem; color: var(--vscode-descriptionForeground, #aaa); font-size: .7rem; }
+.run-meta > span { min-width: 0; }
+.gold-info { display: inline-flex; align-items: center; gap: .25rem; flex: 0 0 auto; padding: .2rem .35rem; color: #e4bd57; background: transparent; border-color: color-mix(in srgb, #e4bd57 45%, var(--vscode-panel-border, #444)); font-size: .68rem; }
+.gold-info:hover { background: color-mix(in srgb, #e4bd57 12%, transparent); }
+.gold-info svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.gold-info strong { font-family: ui-monospace, monospace; }
 .level-up-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
 .level-up-heading h3 { margin: 0; color: #e5a8b3; }
 .level-up-heading span { color: var(--vscode-descriptionForeground, #aaa); font-size: .7rem; text-align: right; }
@@ -69,5 +74,25 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .info-link:hover { color: #f0b5c1; background: transparent; }
 .secondary-action { text-align: left; }
 .secondary-action small { color: var(--vscode-descriptionForeground, #aaa); font-size: .65rem; }
+.summary-panel { display: grid; gap: .65rem; padding: .7rem; border: 1px solid color-mix(in srgb, var(--guild-crimson) 55%, var(--vscode-panel-border, #444)); border-radius: 6px; background: color-mix(in srgb, var(--vscode-editor-background, #111) 84%, var(--guild-crimson-soft)); }
+.summary-outcome-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+.summary-kicker { margin: 0; color: var(--vscode-descriptionForeground, #aaa); font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; }
+.summary-outcome-row h3 { margin: .08rem 0; font-size: 1.2rem; }
+.summary-outcome-row p:last-child { margin: 0; color: var(--vscode-descriptionForeground, #bbb); font-size: .78rem; }
+.summary-badge { padding: .22rem .4rem; color: #f7dfe3; background: var(--guild-crimson-soft); border: 1px solid var(--guild-crimson-muted); border-radius: 999px; font-size: .67rem; font-weight: 700; }
+.summary-badge[data-outcome="victory"] { color: #b8f0c9; background: #17352a; border-color: #2e7653; }
+.summary-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.summary-stat { display: grid; gap: .12rem; min-width: 0; padding: .42rem; border: 1px solid var(--vscode-panel-border, #444); border-radius: 4px; background: color-mix(in srgb, var(--vscode-input-background, #222) 55%, transparent); }
+.summary-stat span, .summary-stat small { color: var(--vscode-descriptionForeground, #aaa); font-size: .63rem; }
+.summary-stat strong { font-size: .9rem; }
+.summary-stat small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary-section { display: grid; gap: .3rem; }
+.summary-section h4 { margin: 0; color: #e5a8b3; font-size: .74rem; }
+.summary-section p { margin: 0; color: var(--vscode-descriptionForeground, #bbb); font-size: .7rem; }
+.summary-chips, .summary-rows { display: flex; flex-wrap: wrap; gap: .3rem; }
+.summary-chips span, .summary-rows span { padding: .22rem .35rem; color: #e5a8b3; border: 1px solid color-mix(in srgb, var(--guild-crimson) 55%, var(--vscode-panel-border, #444)); border-radius: 3px; font-size: .66rem; }
+.summary-rows span { color: var(--vscode-descriptionForeground, #bbb); border-color: var(--vscode-panel-border, #444); }
+.summary-chips .empty-state, .summary-rows .empty-state { color: var(--vscode-descriptionForeground, #aaa); border-style: dashed; }
+.summary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
 @media (max-width: 280px) { .upgrade-options, .guild-actions { grid-template-columns: 1fr; } }
 button:focus-visible { outline: 2px solid var(--vscode-focusBorder, #fff); outline-offset: 2px; }

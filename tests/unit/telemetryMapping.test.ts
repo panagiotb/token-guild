@@ -13,6 +13,8 @@ describe('gameplay telemetry mapping', () => {
     expect(run.phase).toBe('summary');
     expect(run.outcome).toBe('victory');
     expect(run.gold).toBe(100);
+    expect(run.summary?.goldBreakdown).toEqual({ enemyKills: 0, bossChest: 100 });
+    expect(run.summary?.heroName).toBe('Wizard');
   });
 
   it('rejects invalid thinking durations', () => {

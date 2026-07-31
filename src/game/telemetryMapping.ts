@@ -1,4 +1,4 @@
-import { applyTokenInput } from './simulation';
+import { applyTokenInput, finishRun, grantBossReward } from './simulation';
 import type { RunState } from './types';
 
 export type GameplayTelemetryEvent =
@@ -16,14 +16,12 @@ export function applyGameplayTelemetry(state: RunState, event: GameplayTelemetry
   } else if (event.type === 'error') {
     state.hazardsTriggered += 1;
     state.hero.stats.hp -= Math.max(1, 10 - state.hero.stats.armor);
-    if (state.hero.stats.hp <= 0) {
-      state.phase = 'summary'; state.outcome = 'defeat'; state.summary = { outcome: 'defeat', elapsedSeconds: state.elapsedSeconds, tokens: state.totalTokens, gold: state.gold, enemiesDefeated: state.enemiesDefeated, damageByWeapon: { ...state.damageByWeapon } };
-    }
+    if (state.hero.stats.hp <= 0) finishRun(state, 'defeat');
   } else {
     state.bossSpawned = true;
     state.enemies = state.enemies.filter((enemy) => !enemy.isBoss);
-    state.phase = 'summary'; state.outcome = 'victory'; state.summary = { outcome: 'victory', elapsedSeconds: state.elapsedSeconds, tokens: state.totalTokens, gold: state.gold + 100, enemiesDefeated: state.enemiesDefeated, damageByWeapon: { ...state.damageByWeapon } };
-    state.gold += 100;
+    grantBossReward(state);
+    finishRun(state, 'victory');
   }
   return state;
 }

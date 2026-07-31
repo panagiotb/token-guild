@@ -18,14 +18,18 @@ class GuildViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview')]
     };
 
-    webviewView.webview.onDidReceiveMessage(async (rawMessage: unknown) => {
-      try {
-        const message = validateWebviewMessage(rawMessage);
-        await this.handleMessage(webviewView, message);
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : 'Unknown message error';
-        void vscode.window.showErrorMessage(`Token Guild message rejected: ${detail}`);
-      }
+    let messageQueue: Promise<void> = Promise.resolve();
+    webviewView.webview.onDidReceiveMessage((rawMessage: unknown) => {
+      messageQueue = messageQueue.then(async () => {
+        try {
+          const message = validateWebviewMessage(rawMessage);
+          await this.handleMessage(webviewView, message);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : 'Unknown message error';
+          void vscode.window.showErrorMessage(`Token Guild message rejected: ${detail}`);
+        }
+      });
+      void messageQueue;
     }, undefined, []);
 
     const templatePath = join(this.extensionUri.fsPath, 'dist', 'webview', 'index.html');
@@ -45,7 +49,7 @@ class GuildViewProvider implements vscode.WebviewViewProvider {
     } else if (message.type === 'SAVE_PROGRESS') {
       await this.state.save(message.payload);
     } else if (message.type === 'RECORD_RUN_REWARD') {
-      await this.state.applyRunReward(await this.state.load(), message.payload.runId, message.payload.gold, message.payload.tokens);
+      await this.state.applyRunReward(await this.state.load(), message.payload.runId, message.payload.gold, message.payload.tokens, message.payload.heroId, message.payload.level);
       await webviewView.webview.postMessage({ version: 1, type: 'LOAD_PROGRESS', payload: await this.state.load() });
     } else if (message.type === 'RESET_PROGRESS') {
       await this.state.reset();

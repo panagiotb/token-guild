@@ -4,9 +4,11 @@ import { getXpRequiredForLevel } from '../game/math';
 import { TokenBus } from '../telemetry/tokenBus';
 import { AudioManager } from './audio';
 import { downloadShareCard } from './shareCard';
-import type { HeroId, RunState } from '../game/types';
+import { formatHeroOptionDescription, formatHeroOptionLabel } from './heroProgress';
+import { buildSummaryViewModel } from './summaryModel';
+import type { HeroId, RunState, RunSummary } from '../game/types';
 import classes from '../game/data/classes.json';
-import type { PersistedProgress, HostToWebviewMessage } from '../shared/types';
+import type { HostToWebviewMessage, PersistedProgress } from '../shared/types';
 
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const vscodeApi = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : undefined;
@@ -22,7 +24,8 @@ const icons = {
   weapon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 9-9m-6 7-2-2m5-7 2 2 6-6a2 2 0 0 0-2-2l-6 6Zm8-8 2 2"/></svg>',
   power: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"/></svg>',
   heal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20S4 15.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 6.5-8 11-8 11Z"/></svg>',
-  hero: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c.6-4.2 2.9-6.5 7-6.5s6.4 2.3 7 6.5"/></svg>'
+  hero: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c.6-4.2 2.9-6.5 7-6.5s6.4 2.3 7 6.5"/></svg>',
+  gold: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5c.4-.8 1.2-1.2 2.5-1.2 1.5 0 2.4.6 2.4 1.6 0 .9-.7 1.3-2.1 1.6-1.5.3-2.3.7-2.3 1.7 0 1.1 1 1.7 2.5 1.7 1.2 0 2.1-.4 2.6-1.2M12 7v10"/></svg>'
 } as const;
 const upgradeIcons: Record<string, string> = { 'weapon-upgrade': icons.weapon, 'power-gauntlets': icons.power, heal: icons.heal };
 const upgradeHints: Record<string, string> = { 'weapon-upgrade': 'More damage', 'power-gauntlets': '+10% Might', heal: 'Restore 25% HP' };
@@ -36,9 +39,9 @@ app.innerHTML = `
     <section id="guild-screen" class="screen" aria-labelledby="guild-title">
       <h2 id="guild-title">Guild Hall</h2><p>Choose a hero for the Code Dungeon.</p>
       <label for="hero-select">Hero</label><select id="hero-select"></select>
-      <div class="guild-actions"><button class="primary-action" type="button" id="start-run">${icons.run}<span>Start dungeon run</span></button>
-      <button type="button" id="buy-might">Buy Guild Might · 100 gold</button>
-      </div><button class="info-link" type="button" id="might-info">What is Guild Might?</button><output id="guild-status" role="status">Ready.</output><dialog id="might-dialog" class="token-dialog"><form method="dialog"><h3>Guild Might</h3><p>Guild Might is a permanent between-run upgrade. Each rank costs 100 gold and adds 5% weapon damage to every future run.</p><ul><li>It persists when you return to the Guild or restart VS Code.</li><li>It affects weapon damage, not token counting or XP.</li><li>It is this MVP's simplified equivalent of a permanent meta-progression PowerUp.</li></ul><button class="dialog-close" type="submit">Close</button></form></dialog>
+      <div class="guild-actions"><button class="primary-action" type="button" id="start-run">${icons.run}<span>Start dungeon run</span></button><button type="button" id="buy-might">Buy Guild Might · 100 gold</button></div>
+      <button class="info-link" type="button" id="might-info">What is Guild Might?</button><output id="guild-status" role="status">Ready.</output>
+      <dialog id="might-dialog" class="token-dialog"><form method="dialog"><h3>Guild Might</h3><p>Guild Might is a permanent between-run upgrade. Each rank costs 100 gold and adds 5% weapon damage to every future run.</p><ul><li>It persists when you return to the Guild or restart VS Code.</li><li>It affects weapon damage, not token counting or XP.</li><li>It is this MVP's simplified equivalent of a permanent meta-progression PowerUp.</li></ul><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="run-screen" class="screen hidden" aria-labelledby="run-title">
       <div class="run-heading"><h2 id="run-title">Code Dungeon</h2><button class="token-info" type="button" id="token-info" title="Explain synthetic token flow">Synthetic tokens <span id="token-rate">12/s</span></button></div>
@@ -48,31 +51,27 @@ app.innerHTML = `
         <div class="character-bars"><div class="bar-row"><span>HP</span><div id="hp-bar" class="stat-bar" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><output id="hp-value">100/100</output></div><div class="bar-row"><span>XP</span><div id="xp-bar" class="stat-bar xp" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><output id="xp-value">0 / 5</output></div></div>
         <div class="character-loadout"><span id="weapon-detail">Weapon</span><span id="passive-detail">Passive</span></div><div id="character-attributes" class="character-attributes" aria-label="Character attributes"></div><div id="character-upgrades" class="character-upgrades" aria-label="Run upgrades"></div>
       </section>
-      <div class="run-meta" id="run-meta" aria-live="polite"><span id="run-meta-copy"></span><span id="hero-hud" class="sr-only"></span><span id="run-hud" class="sr-only"></span><span id="phase-label" class="sr-only"></span></div>
+      <div class="run-meta" id="run-meta" aria-live="polite"><span id="run-meta-copy"></span><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
       <div id="cards" class="cards hidden" aria-live="polite"></div>
-      <p class="controls">Move with arrow keys or WASD.</p>
+      <p class="controls">Move with arrow keys or WASD. Synthetic tokens flow while the run is active.</p>
       <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 3 synthetic tokens every 250 ms, displayed as 12 tokens per second.</p><ul><li>Every token grants 1 XP.</li><li>Token throughput can modify combat; the fixture is intentionally steady.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
+      <dialog id="gold-dialog" class="token-dialog"><form method="dialog"><h3>Gold ledger</h3><p>Run gold is earned locally and is added to the Guild wallet only once when the run reward is recorded.</p><ul><li>Ordinary enemy: +1 gold at defeat.</li><li>Boss chest: +100 gold at boss defeat. The yellow map marker is feedback for that reward and cannot pay it twice.</li><li>Run gold and Guild wallet totals are shown separately on the result screen.</li></ul><p id="gold-breakdown-dialog">No gold earned yet.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="summary-screen" class="screen hidden" aria-labelledby="summary-title">
-      <h2 id="summary-title">Run Summary</h2><output id="summary" role="status"></output>
-      <button type="button" id="share-card">Export summary PNG</button>
-      <button type="button" id="return-guild">Return to Guild</button>
+      <h2 id="summary-title">Run Summary</h2><output id="summary" class="sr-only" role="status"></output>
+      <section class="summary-panel" aria-labelledby="summary-outcome"><div class="summary-outcome-row"><div><p class="summary-kicker">Run result</p><h3 id="summary-outcome">Victory</h3><p id="summary-hero">Hero · Level 1</p></div><span id="summary-badge" class="summary-badge">Victory</span></div>
+        <div class="summary-stats"><div class="summary-stat"><span>Duration</span><strong id="summary-duration">0s</strong></div><div class="summary-stat"><span>Tokens</span><strong id="summary-tokens">0</strong><small id="summary-token-source">synthetic / exact</small></div><div class="summary-stat"><span>Run gold</span><strong id="summary-gold">0</strong><small>earned this run</small></div><div class="summary-stat"><span>Guild wallet</span><strong id="summary-wallet">0</strong><small>after save</small></div><div class="summary-stat"><span>Enemies</span><strong id="summary-enemies">0 / 0</strong><small>spawned / defeated</small></div></div>
+        <section class="summary-section" aria-labelledby="summary-rewards-title"><h4 id="summary-rewards-title">Rewards</h4><p id="summary-gold-breakdown">No gold earned.</p></section>
+        <section class="summary-section" aria-labelledby="summary-build-title"><h4 id="summary-build-title">Selected upgrades</h4><div id="summary-upgrades" class="summary-chips"></div></section>
+        <section class="summary-section" aria-labelledby="summary-damage-title"><h4 id="summary-damage-title">Damage by weapon</h4><div id="summary-damage" class="summary-rows"></div></section>
+      </section>
+      <div class="summary-actions"><button class="secondary-action" type="button" id="share-card">Export summary PNG</button><button class="primary-action" type="button" id="return-guild">Return to Guild</button></div>
     </section>
   </section>
 `;
 
 const heroSelect = document.querySelector<HTMLSelectElement>('#hero-select')!;
 const buyMightButton = document.querySelector<HTMLButtonElement>('#buy-might')!;
-const tokenInfoButton = document.querySelector<HTMLButtonElement>('#token-info')!;
-const tokenDialog = document.querySelector<HTMLDialogElement>('#token-dialog')!;
-const mightInfoButton = document.querySelector<HTMLButtonElement>('#might-info')!;
-const mightDialog = document.querySelector<HTMLDialogElement>('#might-dialog')!;
-tokenInfoButton.addEventListener('click', () => { if (typeof tokenDialog.showModal === 'function') tokenDialog.showModal(); else tokenDialog.setAttribute('open', ''); });
-mightInfoButton.addEventListener('click', () => { if (typeof mightDialog.showModal === 'function') mightDialog.showModal(); else mightDialog.setAttribute('open', ''); });
-buyMightButton.className = 'secondary-action';
-buyMightButton.title = 'Guild Might: permanent +5% damage per rank';
-buyMightButton.innerHTML = `${icons.might}<span>Guild Might</span><small>100 gold · +5% damage</small>`;
-for (const hero of heroes) heroSelect.add(new Option(heroNames[hero], hero));
 const guildScreen = document.querySelector<HTMLElement>('#guild-screen')!;
 const runScreen = document.querySelector<HTMLElement>('#run-screen')!;
 const summaryScreen = document.querySelector<HTMLElement>('#summary-screen')!;
@@ -82,20 +81,58 @@ const drawingContext = canvas.getContext('2d');
 if (!drawingContext) throw new Error('Canvas rendering is unavailable');
 const context: CanvasRenderingContext2D = drawingContext;
 
+function defaultProgress(): PersistedProgress {
+  return { schemaVersion: 2, gold: 0, unlockedHeroes: [...heroes], upgrades: {}, heroRecords: Object.fromEntries(heroes.map((hero) => [hero, { highestLevel: 1 }])), runCount: 0, totalTokens: 0, completedRunIds: [], settings: { muted: false, volume: 0.08 } };
+}
+
+let progress: PersistedProgress = defaultProgress();
+const audioManager = new AudioManager(progress.settings);
 let run: RunState | undefined;
 let loop: number | undefined;
 let tokenBus: TokenBus | undefined;
+let activeRunId: string | undefined;
 const keys = new Set<string>();
-let progress: PersistedProgress = { schemaVersion: 1, gold: 0, unlockedHeroes: [...heroes], upgrades: {}, runCount: 0, totalTokens: 0, completedRunIds: [], settings: { muted: false, volume: 0.08 } };
-const audioManager = new AudioManager(progress.settings);
 let previousPhase = 'guild';
 
-function renderGuildStatus(): void {
-  document.querySelector<HTMLOutputElement>('#guild-status')!.value = `Gold ${progress.gold} · Runs ${progress.runCount} · Tokens ${progress.totalTokens} · Might rank ${progress.upgrades.might ?? 0}`;
-  document.querySelector<HTMLButtonElement>('#buy-might')!.disabled = progress.gold < 100;
+function labelForId(value: string | undefined): string {
+  return value ? value.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ') : 'Unknown';
+}
+
+function setText(id: string, value: string): void {
+  const element = document.querySelector<HTMLElement>(`#${id}`);
+  if (element) element.textContent = value;
 }
 
 function show(element: HTMLElement, visible: boolean): void { element.classList.toggle('hidden', !visible); }
+
+function openDialog(dialog: HTMLDialogElement): void {
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+}
+
+function highestLevel(hero: HeroId): number {
+  return progress.heroRecords[hero]?.highestLevel ?? 1;
+}
+
+function renderHeroOptions(): void {
+  const selected = heroSelect.value;
+  heroSelect.replaceChildren();
+  for (const hero of heroes) {
+    const option = new Option(formatHeroOptionLabel(heroNames[hero], highestLevel(hero)), hero);
+    option.disabled = !progress.unlockedHeroes.includes(hero);
+    option.title = formatHeroOptionDescription(heroNames[hero], highestLevel(hero));
+    option.setAttribute('aria-label', formatHeroOptionDescription(heroNames[hero], highestLevel(hero)));
+    heroSelect.add(option);
+  }
+  if (heroes.includes(selected as HeroId) && progress.unlockedHeroes.includes(selected)) heroSelect.value = selected;
+}
+
+function renderGuildStatus(): void {
+  const status = document.querySelector<HTMLOutputElement>('#guild-status');
+  if (status) status.value = `Gold ${progress.gold} · Runs ${progress.runCount} · Tokens ${progress.totalTokens} · Might rank ${progress.upgrades.might ?? 0}`;
+  buyMightButton.disabled = progress.gold < 100;
+  renderHeroOptions();
+}
 
 function renderWorld(): void {
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -108,45 +145,46 @@ function renderWorld(): void {
   context.fillStyle = '#64d98b'; context.beginPath(); context.arc(screenX(run.hero.x), screenY(run.hero.y), 7, 0, Math.PI * 2); context.fill();
 }
 
-function renderRun(): void {
+function renderCharacter(): void {
   if (!run) return;
-  const heroHud = document.querySelector<HTMLElement>('#hero-hud')!;
-  const runHud = document.querySelector<HTMLElement>('#run-hud')!;
-  const phaseLabel = document.querySelector<HTMLElement>('#phase-label')!;
-  heroHud.textContent = `${heroNames[run.heroId]} HP ${Math.max(0, Math.ceil(run.hero.stats.hp))}/${run.hero.stats.maxHp} · L${run.level}`;
-  runHud.textContent = `${Math.floor(run.elapsedSeconds)}s · XP ${Math.floor(run.xp)} · Tokens ${run.totalTokens} · Synthetic/exact · Enemies ${run.enemies.length}`;
-  phaseLabel.textContent = run.phase === 'level-up' ? 'Choose upgrade' : 'Dungeon';
   const classInfo = classes.find((entry) => entry.id === run!.heroId);
-  const labelForId = (value: string | undefined): string => value ? value.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ') : 'Unknown';
   const hp = Math.max(0, Math.ceil(run.hero.stats.hp));
   const hpPercent = Math.max(0, Math.min(100, (hp / run.hero.stats.maxHp) * 100));
   const xpRequired = getXpRequiredForLevel(run.level);
   const xpPercent = Math.max(0, Math.min(100, (run.xp / xpRequired) * 100));
-  document.querySelector<HTMLElement>('#character-title')!.textContent = heroNames[run.heroId];
-  document.querySelector<HTMLElement>('#character-role')!.textContent = `${labelForId(classInfo?.startingWeaponId)} class`;
-  document.querySelector<HTMLElement>('#character-level')!.textContent = `Lvl ${run.level}`;
-  document.querySelector<HTMLOutputElement>('#hp-value')!.value = `${hp}/${run.hero.stats.maxHp}`;
-  document.querySelector<HTMLOutputElement>('#xp-value')!.value = `${Math.floor(run.xp)} / ${xpRequired}`;
+  setText('character-title', heroNames[run.heroId]);
+  setText('character-role', `${labelForId(classInfo?.startingWeaponId)} class`);
+  setText('character-level', `Lvl ${run.level}`);
+  setText('hp-value', `${hp}/${run.hero.stats.maxHp}`);
+  setText('xp-value', `${Math.floor(run.xp)} / ${xpRequired}`);
   const hpBar = document.querySelector<HTMLElement>('#hp-bar')!;
   hpBar.style.setProperty('--bar-value', `${hpPercent}%`); hpBar.setAttribute('aria-valuenow', String(hp)); hpBar.setAttribute('aria-valuemax', String(run.hero.stats.maxHp));
   const xpBar = document.querySelector<HTMLElement>('#xp-bar')!;
   xpBar.style.setProperty('--bar-value', `${xpPercent}%`); xpBar.setAttribute('aria-valuenow', String(Math.floor(run.xp))); xpBar.setAttribute('aria-valuemax', String(xpRequired));
-  document.querySelector<HTMLElement>('#weapon-detail')!.textContent = `Weapon · ${labelForId(run.weapons[0]?.id)}`;
-  document.querySelector<HTMLElement>('#passive-detail')!.textContent = `Passive · ${labelForId(classInfo?.passive.stat)}`;
-  document.querySelector<HTMLElement>('#run-meta-copy')!.textContent = `${Math.floor(run.elapsedSeconds)}s · ${run.enemies.length} enemies`;
-  document.querySelector<HTMLElement>('#token-rate')!.textContent = `12/s · ${run.totalTokens} total`;
   const weapon = run.weapons[0];
-  document.querySelector<HTMLElement>('#weapon-detail')!.textContent = `Weapon · ${labelForId(weapon?.id)} Lv${weapon?.level ?? 1}`;
-  document.querySelector<HTMLElement>('#passive-detail')!.textContent = `Class passive · ${labelForId(classInfo?.passive.stat)}`;
-  document.querySelector<HTMLElement>('#character-attributes')!.innerHTML = `<span>Might ${Math.round(run.hero.stats.might * 100)}%</span><span>Armor ${run.hero.stats.armor}</span><span>Move ${Math.round(run.hero.stats.moveSpeed)}</span><span>Cooldown ${Math.round(run.hero.stats.cooldown * 100)}%</span>`;
+  setText('weapon-detail', `Weapon · ${labelForId(weapon?.id)} Lv${weapon?.level ?? 1}`);
+  setText('passive-detail', `Class passive · ${labelForId(classInfo?.passive.stat)}`);
+  const attributes = document.querySelector<HTMLElement>('#character-attributes')!;
+  attributes.replaceChildren(...[
+    `Might ${Math.round(run.hero.stats.might * 100)}%`, `Armor ${run.hero.stats.armor}`, `Move ${Math.round(run.hero.stats.moveSpeed)}`, `Cooldown ${Math.round(run.hero.stats.cooldown * 100)}%`
+  ].map((value) => { const span = document.createElement('span'); span.textContent = value; return span; }));
   const upgradeEntries = [
     ...(weapon && weapon.level > 1 ? [`${labelForId(weapon.id)} Lv${weapon.level}`] : []),
     ...Object.entries(run.passives).filter(([, rank]) => rank > 0).map(([id, rank]) => `${labelForId(id)} R${rank}`)
   ];
-  document.querySelector<HTMLElement>('#character-upgrades')!.innerHTML = upgradeEntries.length > 0
-    ? upgradeEntries.map((entry) => `<span>${entry}</span>`).join('')
-    : '<span class="no-upgrades">No run upgrades yet</span>';
-  document.querySelector<HTMLElement>('#run-meta-copy')!.textContent = `${Math.floor(run.elapsedSeconds)}s · Spawned ${run.enemiesSpawned} · Defeated ${run.enemiesDefeated} · Active ${run.enemies.length}`;
+  const upgrades = document.querySelector<HTMLElement>('#character-upgrades')!;
+  upgrades.replaceChildren(...(upgradeEntries.length > 0 ? upgradeEntries : ['No run upgrades yet']).map((value) => { const span = document.createElement('span'); span.textContent = value; if (value === 'No run upgrades yet') span.className = 'no-upgrades'; return span; }));
+}
+
+function renderRun(): void {
+  if (!run) return;
+  renderCharacter();
+  setText('run-meta-copy', `${Math.floor(run.elapsedSeconds)}s · Spawned ${run.enemiesSpawned} · Defeated ${run.enemiesDefeated} · Active ${run.enemies.length} · XP ${Math.floor(run.xp)}`);
+  setText('token-rate', `12/s · ${run.totalTokens} total`);
+  setText('gold-hud', String(run.gold));
+  setText('gold-breakdown-dialog', `Current run: ${run.gold} gold · Enemy defeats ${run.goldBreakdown.enemyKills} · Boss chest ${run.goldBreakdown.bossChest}`);
+  const goldInfo = document.querySelector<HTMLButtonElement>('#gold-info');
+  if (goldInfo) goldInfo.title = `Gold ${run.gold}: enemy defeats ${run.goldBreakdown.enemyKills}, boss chest ${run.goldBreakdown.bossChest}`;
   if (run.phase !== previousPhase) {
     if (run.phase === 'level-up') audioManager.playTone(660, 140);
     if (run.phase === 'summary') audioManager.playTone(run.outcome === 'victory' ? 880 : 180, 240);
@@ -155,27 +193,72 @@ function renderRun(): void {
   renderWorld();
   show(cards, run.phase === 'level-up');
   if (run.phase === 'level-up') {
-    cards.innerHTML = '<div class="level-up-heading"><h3>Level up</h3><span>Choose upgrade below to continue:</span></div><div class="upgrade-options"></div>';
-    const options = cards.querySelector<HTMLElement>('.upgrade-options')!;
+    cards.replaceChildren();
+    const heading = document.createElement('div'); heading.className = 'level-up-heading';
+    const title = document.createElement('h3'); title.textContent = 'Level up';
+    const hint = document.createElement('span'); hint.textContent = 'Choose upgrade below to continue:';
+    heading.append(title, hint);
+    const options = document.createElement('div'); options.className = 'upgrade-options';
     for (const card of run.pendingCards) {
-      const button = document.createElement('button'); button.className = 'upgrade-card'; button.type = 'button'; button.innerHTML = `${upgradeIcons[card.id] ?? icons.power}<span class="upgrade-copy"><strong>${card.label}</strong><small>${upgradeHints[card.id] ?? 'Improve your run'}</small></span>`; button.addEventListener('click', () => { if (run) { chooseUpgrade(run, card.id); renderRun(); } }); options.append(button);
+      const button = document.createElement('button'); button.className = 'upgrade-card'; button.type = 'button'; button.innerHTML = `${upgradeIcons[card.id] ?? icons.power}<span class="upgrade-copy"><strong>${card.label}</strong><small>${upgradeHints[card.id] ?? 'Improve your run'}</small></span>`;
+      button.addEventListener('click', () => { if (run) { chooseUpgrade(run, card.id); renderRun(); } });
+      options.append(button);
     }
+    cards.append(heading, options);
   }
 }
 
+function formatUpgrade(id: string): string {
+  const levelMatch = id.match(/^(.+):level-(\d+)$/);
+  return levelMatch ? `${labelForId(levelMatch[1])} · Level ${levelMatch[2]}` : labelForId(id);
+}
+
+function renderSummary(summary: RunSummary, guildGold: number): void {
+  const view = buildSummaryViewModel(summary, guildGold);
+  setText('summary-outcome', view.outcome);
+  setText('summary-badge', view.outcome);
+  setText('summary-hero', view.hero);
+  setText('summary-duration', view.duration);
+  setText('summary-tokens', view.tokens);
+  setText('summary-token-source', view.tokenSource);
+  setText('summary-gold', view.gold);
+  setText('summary-wallet', view.guildWallet);
+  setText('summary-enemies', view.enemies);
+  setText('summary-gold-breakdown', view.goldBreakdown);
+  const upgrades = document.querySelector<HTMLElement>('#summary-upgrades')!;
+  upgrades.replaceChildren(...view.upgrades.map((value) => { const chip = document.createElement('span'); chip.textContent = formatUpgrade(value); if (value === 'No upgrades selected') chip.className = 'empty-state'; return chip; }));
+  const damage = document.querySelector<HTMLElement>('#summary-damage')!;
+  const damageRows = view.damage.length > 0 ? view.damage.map(({ weapon, amount }) => `${labelForId(weapon)} · ${Math.round(amount)} damage`) : ['No weapon damage recorded'];
+  damage.replaceChildren(...damageRows.map((value) => { const row = document.createElement('span'); row.textContent = value; if (value === 'No weapon damage recorded') row.className = 'empty-state'; return row; }));
+  const announce = document.querySelector<HTMLOutputElement>('#summary')!;
+  announce.value = view.announcement;
+  const badge = document.querySelector<HTMLElement>('#summary-badge')!;
+  badge.dataset.outcome = summary.outcome;
+}
+
 function finishRun(): void {
-  if (!run?.summary) return;
+  if (!run?.summary || !activeRunId) return;
   if (loop !== undefined) { window.clearInterval(loop); loop = undefined; }
   show(runScreen, false); show(summaryScreen, true);
-  const damage = Object.entries(run.summary.damageByWeapon).map(([weapon, amount]) => `${weapon}: ${Math.round(amount)}`).join(', ');
-  document.querySelector<HTMLOutputElement>('#summary')!.value = `${run.summary.outcome === 'victory' ? 'Victory' : 'Defeat'} · ${run.summary.enemiesDefeated} enemies · ${run.summary.tokens} tokens · ${run.summary.gold} gold · Damage ${damage || 'none'}`;
-  const runId = `demo-${Date.now()}-${progress.runCount}`;
-  if (!progress.completedRunIds.includes(runId)) progress = { ...progress, gold: progress.gold + run.summary.gold, runCount: progress.runCount + 1, totalTokens: progress.totalTokens + run.summary.tokens, completedRunIds: [...progress.completedRunIds, runId] };
-  vscodeApi?.postMessage({ version: 1, type: 'RECORD_RUN_REWARD', payload: { runId, gold: run.summary.gold, tokens: run.summary.tokens } });
+  const summary = run.summary;
+  if (!progress.completedRunIds.includes(activeRunId)) {
+    const previous = progress.heroRecords[summary.heroId]?.highestLevel ?? 1;
+    progress = {
+      ...progress,
+      gold: progress.gold + summary.gold,
+      runCount: progress.runCount + 1,
+      totalTokens: progress.totalTokens + summary.tokens,
+      completedRunIds: [...progress.completedRunIds, activeRunId],
+      heroRecords: { ...progress.heroRecords, [summary.heroId]: { highestLevel: Math.max(previous, summary.level) } }
+    };
+  }
+  renderSummary(summary, progress.gold);
+  vscodeApi?.postMessage({ version: 1, type: 'RECORD_RUN_REWARD', payload: { runId: activeRunId, gold: summary.gold, tokens: summary.tokens, heroId: summary.heroId, level: summary.level } });
 }
 
 function startRun(): void {
   run = createRun(heroSelect.value as HeroId, 0xdecafbad, progress.upgrades);
+  activeRunId = `demo-${Date.now()}-${progress.runCount}`;
   previousPhase = 'guild';
   audioManager.playTone(440, 100);
   tokenBus = new TokenBus((event) => { if (run) applyTokenInput(run, event); });
@@ -191,7 +274,7 @@ function startRun(): void {
     const length = Math.hypot(direction.x, direction.y) || 1;
     run.hero.x += (direction.x / length) * run.hero.stats.moveSpeed * 0.25;
     run.hero.y += (direction.y / length) * run.hero.stats.moveSpeed * 0.25;
-    tokenBus?.ingest({ source: 'synthetic', accuracy: 'exact', timestampMs: Math.round((run.elapsedSeconds + 0.25) * 1000), count: 3, tokensPerSecond: 12, confidence: 1, runId: 'demo-run' });
+    tokenBus?.ingest({ source: 'synthetic', accuracy: 'exact', timestampMs: Math.round((run.elapsedSeconds + 0.25) * 1000), count: 3, tokensPerSecond: 12, confidence: 1, runId: activeRunId });
     tokenBus?.flush(Math.round((run.elapsedSeconds + 0.25) * 1000));
     tick(run, 0.25, 12);
     renderRun();
@@ -200,12 +283,21 @@ function startRun(): void {
 }
 
 document.querySelector<HTMLButtonElement>('#start-run')!.addEventListener('click', startRun);
+buyMightButton.className = 'secondary-action';
+buyMightButton.title = 'Guild Might: permanent +5% damage per rank';
+buyMightButton.innerHTML = `${icons.might}<span>Guild Might</span><small>100 gold · +5% damage</small>`;
 document.querySelector<HTMLButtonElement>('#buy-might')!.addEventListener('click', () => {
   if (progress.gold < 100) return;
   progress = { ...progress, gold: progress.gold - 100, upgrades: { ...progress.upgrades, might: (progress.upgrades.might ?? 0) + 1 } };
   renderGuildStatus();
   vscodeApi?.postMessage({ version: 1, type: 'SAVE_PROGRESS', payload: progress });
 });
+const tokenDialog = document.querySelector<HTMLDialogElement>('#token-dialog')!;
+const mightDialog = document.querySelector<HTMLDialogElement>('#might-dialog')!;
+const goldDialog = document.querySelector<HTMLDialogElement>('#gold-dialog')!;
+document.querySelector<HTMLButtonElement>('#token-info')!.addEventListener('click', () => openDialog(tokenDialog));
+document.querySelector<HTMLButtonElement>('#might-info')!.addEventListener('click', () => openDialog(mightDialog));
+document.querySelector<HTMLButtonElement>('#gold-info')!.addEventListener('click', () => openDialog(goldDialog));
 document.querySelector<HTMLButtonElement>('#mute')!.addEventListener('click', (event) => {
   const button = event.currentTarget as HTMLButtonElement;
   const muted = !progress.settings.muted;
@@ -228,13 +320,12 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
   if (message.type === 'LOAD_PROGRESS') {
     progress = message.payload;
     audioManager.setSettings(progress.settings);
-    const mute = document.querySelector<HTMLButtonElement>('#mute')!; mute.setAttribute('aria-pressed', String(progress.settings.muted)); mute.setAttribute('aria-label', progress.settings.muted ? 'Unmute sound' : 'Mute sound'); mute.title = progress.settings.muted ? 'Unmute sound' : 'Mute sound'; mute.innerHTML = progress.settings.muted ? icons.soundOff : icons.soundOn;
+    const mute = document.querySelector<HTMLButtonElement>('#mute')!;
+    mute.setAttribute('aria-pressed', String(progress.settings.muted)); mute.setAttribute('aria-label', progress.settings.muted ? 'Unmute sound' : 'Mute sound'); mute.title = progress.settings.muted ? 'Unmute sound' : 'Mute sound'; mute.innerHTML = progress.settings.muted ? icons.soundOff : icons.soundOn;
     renderGuildStatus();
-    for (const option of Array.from(heroSelect.options)) option.disabled = !progress.unlockedHeroes.includes(option.value);
+    if (run?.summary && !summaryScreen.classList.contains('hidden')) renderSummary(run.summary, progress.gold);
   }
 });
-document.querySelector<HTMLButtonElement>('#share-card')!.addEventListener('click', () => {
-  if (run?.summary) downloadShareCard(run.summary);
-});
+document.querySelector<HTMLButtonElement>('#share-card')!.addEventListener('click', () => { if (run?.summary) downloadShareCard(run.summary); });
 renderGuildStatus();
 vscodeApi?.postMessage({ version: 1, type: 'READY' });

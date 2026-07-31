@@ -1,4 +1,4 @@
-import type { TokenStreamEvent } from '../shared/types';
+import type { Accuracy, TelemetrySource, TokenStreamEvent } from '../shared/types';
 
 export type HeroId = 'warrior' | 'wizard' | 'rogue' | 'ranger' | 'paladin' | 'necromancer';
 export type RunPhase = 'dungeon' | 'level-up' | 'summary';
@@ -53,13 +53,26 @@ export interface UpgradeCard {
   target: string;
 }
 
+export interface GoldBreakdown {
+  readonly enemyKills: number;
+  readonly bossChest: number;
+}
+
 export interface RunSummary {
   outcome: RunOutcome;
+  heroId: HeroId;
+  heroName: string;
+  level: number;
   elapsedSeconds: number;
   tokens: number;
+  tokenSource: TelemetrySource;
+  tokenAccuracy: Accuracy;
   gold: number;
+  goldBreakdown: GoldBreakdown;
+  enemiesSpawned: number;
   enemiesDefeated: number;
   damageByWeapon: Readonly<Record<string, number>>;
+  upgrades: readonly string[];
 }
 
 export interface RunState {
@@ -72,16 +85,21 @@ export interface RunState {
   xp: number;
   totalTokens: number;
   gold: number;
+  goldBreakdown: { enemyKills: number; bossChest: number };
+  tokenSource: TelemetrySource;
+  tokenAccuracy: Accuracy;
   nextEntityId: number;
   hero: { x: number; y: number; stats: CombatStats };
   weapons: WeaponState[];
   passives: Record<string, number>;
+  upgradeHistory: string[];
   enemies: EnemyState[];
   pickups: PickupState[];
   pendingCards: UpgradeCard[];
   enemiesSpawned: number;
   enemiesDefeated: number;
   bossSpawned: boolean;
+  bossRewardClaimed: boolean;
   powerChargeReady: boolean;
   hazardsTriggered: number;
   damageByWeapon: Record<string, number>;

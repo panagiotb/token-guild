@@ -4,9 +4,9 @@ This document is the execution plan for Token Guild. It defines scope, sequencin
 
 ## Current status
 
-- **Lifecycle:** planning and feasibility validation
-- **Implementation:** not started; the repository currently contains documentation only
-- **Next milestone:** Phase 2 deterministic game vertical slice
+- **Lifecycle:** active MVP implementation and Phase 6 refinement
+- **Implementation:** MVP `0.1.0` vertical slice, UI, persistence, telemetry fixtures, and release tooling are implemented; Phase 6 summary/progression/reward refinements are in progress
+- **Next milestone:** Phase 6 structured summary, hero best-level preview, and reward-ledger review
 - **Release target:** MVP `0.1.0`
 - **Autonomy defaults:** [.dev/AUTONOMY_CONFIG.json](AUTONOMY_CONFIG.json)
 
@@ -342,6 +342,17 @@ Prove the extension is safe, performant, installable, and supportable as `0.1.0`
 - [x] Reliability, compatibility, and package-size evidence is recorded. Formal performance benchmarking is explicitly out of scope for `0.1.0`.
 - [x] The VSIX installs, activates, completes the MVP run loop, persists state, and deactivates cleanly in the isolated VS Code profile smoke test.
 - [x] Version `0.1.0` release notes accurately distinguish supported, experimental, estimated, and unavailable capabilities.
+
+## Phase 6 refinement checkpoint
+
+The scoped follow-up plan and decision record live in [phase-6-next-milestone.md](progress/phase-6-next-milestone.md) and [phase-6-contract.md](decisions/phase-6-contract.md). This work remains MVP-only and does not add DLC, real telemetry, third-party art, or map redesign.
+
+- [x] Freeze the privacy-safe summary contract, hero best-level semantics, schema-2 migration, and single-owner gold ledger.
+- [x] Implement structured victory/defeat summary, local export, loadout/damage empty states, and Guild-wallet reconciliation.
+- [x] Show authoritative `Hero - Level N` best-run labels while keeping new runs at Level 1.
+- [x] Add labeled run-gold HUD feedback and prevent boss-marker double counting; serialize host reward IPC.
+- [x] Pass locked install, lint, typecheck, unit suite, build, host smoke, package, package audit, and production-only dependency audit.
+- [ ] Complete the manual narrow-sidebar playthrough/screenshot review; the current automated host harness cannot drive webview DOM controls.
 
 ## Post-MVP backlog
 

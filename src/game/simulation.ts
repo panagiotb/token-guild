@@ -34,6 +34,7 @@ const HEROES: Record<HeroId, { stats: CombatStats; weapon: string }> = {
   paladin: { stats: { hp: 110, maxHp: 110, armor: 2, moveSpeed: 35, might: 0, area: 0, speed: 0, cooldown: 0, amount: 1, magnet: 40, growth: 0 }, weapon: 'aegis_barrier' },
   necromancer: { stats: { hp: 100, maxHp: 100, armor: 0, moveSpeed: 40, might: 0, area: 0, speed: 0, cooldown: 0, amount: 1, magnet: 32, growth: 0 }, weapon: 'bone_throw' }
 };
+const HERO_NAMES: Record<HeroId, string> = { warrior: 'Warrior', wizard: 'Wizard', rogue: 'Rogue', ranger: 'Ranger', paladin: 'Paladin', necromancer: 'Necromancer' };
 
 function cloneStats(stats: CombatStats): CombatStats {
   return { ...stats };
@@ -74,10 +75,41 @@ function grantXp(state: RunState, amount: number): void {
   }
 }
 
-function finish(state: RunState, outcome: 'victory' | 'defeat'): void {
+function awardGold(state: RunState, source: 'enemyKills' | 'bossChest', amount: number): void {
+  if (amount <= 0) return;
+  state.gold += amount;
+  state.goldBreakdown[source] += amount;
+}
+
+export function grantBossReward(state: RunState): void {
+  if (state.bossRewardClaimed) return;
+  state.bossRewardClaimed = true;
+  awardGold(state, 'bossChest', 100);
+}
+
+function selectedUpgrades(state: RunState): string[] {
+  return [...state.upgradeHistory];
+}
+
+export function finishRun(state: RunState, outcome: 'victory' | 'defeat'): void {
   state.phase = 'summary';
   state.outcome = outcome;
-  state.summary = { outcome, elapsedSeconds: state.elapsedSeconds, tokens: state.totalTokens, gold: state.gold, enemiesDefeated: state.enemiesDefeated, damageByWeapon: { ...state.damageByWeapon } };
+  state.summary = {
+    outcome,
+    heroId: state.heroId,
+    heroName: HERO_NAMES[state.heroId],
+    level: state.level,
+    elapsedSeconds: state.elapsedSeconds,
+    tokens: state.totalTokens,
+    tokenSource: state.tokenSource,
+    tokenAccuracy: state.tokenAccuracy,
+    gold: state.gold,
+    goldBreakdown: { ...state.goldBreakdown },
+    enemiesSpawned: state.enemiesSpawned,
+    enemiesDefeated: state.enemiesDefeated,
+    damageByWeapon: { ...state.damageByWeapon },
+    upgrades: selectedUpgrades(state)
+  };
 }
 
 export function createRun(heroId: HeroId, seed = 1, metaUpgrades: Readonly<Record<string, number>> = {}): RunState {
@@ -85,7 +117,7 @@ export function createRun(heroId: HeroId, seed = 1, metaUpgrades: Readonly<Recor
   if (!config) throw new Error(`Unknown hero: ${heroId}`);
   const stats = cloneStats(config.stats);
   stats.might += (metaUpgrades.might ?? 0) * 0.05;
-  return { phase: 'dungeon', heroId, seed: seed >>> 0, elapsedSeconds: 0, level: 1, xp: 0, totalTokens: 0, gold: 0, nextEntityId: 1, hero: { x: 0, y: 0, stats }, weapons: [{ id: config.weapon, level: 1, cooldownRemaining: 0 }], passives: {}, enemies: [], pickups: [], pendingCards: [], enemiesSpawned: 0, enemiesDefeated: 0, bossSpawned: false, powerChargeReady: false, hazardsTriggered: 0, damageByWeapon: {} };
+  return { phase: 'dungeon', heroId, seed: seed >>> 0, elapsedSeconds: 0, level: 1, xp: 0, totalTokens: 0, gold: 0, goldBreakdown: { enemyKills: 0, bossChest: 0 }, tokenSource: 'synthetic', tokenAccuracy: 'exact', nextEntityId: 1, hero: { x: 0, y: 0, stats }, weapons: [{ id: config.weapon, level: 1, cooldownRemaining: 0 }], passives: {}, upgradeHistory: [], enemies: [], pickups: [], pendingCards: [], enemiesSpawned: 0, enemiesDefeated: 0, bossSpawned: false, bossRewardClaimed: false, powerChargeReady: false, hazardsTriggered: 0, damageByWeapon: {} };
 }
 
 export function applyTokenInput(state: RunState, input: TokenInput): RunState {
@@ -101,12 +133,17 @@ export function chooseUpgrade(state: RunState, cardId: string): RunState {
   if (!card) throw new Error(`Unknown upgrade card: ${cardId}`);
   if (card.kind === 'weapon') {
     const weapon = state.weapons.find((candidate) => candidate.id === card.target);
-    if (weapon) weapon.level = Math.min(8, weapon.level + 1);
+    if (weapon) {
+      weapon.level = Math.min(8, weapon.level + 1);
+      state.upgradeHistory.push(`${weapon.id}:level-${weapon.level}`);
+    }
   } else if (card.kind === 'passive') {
     state.passives[card.target] = Math.min(5, (state.passives[card.target] ?? 0) + 1);
     if (card.target === 'power_gauntlets') state.hero.stats.might += 0.1;
+    state.upgradeHistory.push(card.target);
   } else {
     state.hero.stats.hp = Math.min(state.hero.stats.maxHp, state.hero.stats.hp + state.hero.stats.maxHp * 0.25);
+    state.upgradeHistory.push(card.id);
   }
   state.pendingCards = [];
   state.phase = 'dungeon';
@@ -133,7 +170,7 @@ export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0)
     if (distance(enemy, state.hero) < 8) state.hero.stats.hp -= Math.max(0, enemy.damage - state.hero.stats.armor) * delta;
   }
   if (state.hero.stats.hp <= 0) {
-    finish(state, 'defeat');
+    finishRun(state, 'defeat');
     return state;
   }
 
@@ -154,20 +191,26 @@ export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0)
   const dead = state.enemies.filter((enemy) => enemy.hp <= 0);
   for (const enemy of dead) {
     state.enemiesDefeated += 1;
-    state.gold += enemy.isBoss ? 100 : 1;
-    state.pickups.push({ id: state.nextEntityId++, kind: enemy.isBoss ? 'gold-chest' : 'xp-shard', x: enemy.x, y: enemy.y, value: enemy.isBoss ? 100 : 1 });
+    if (enemy.isBoss) {
+      grantBossReward(state);
+      // The marker communicates the boss reward source; the reward was already
+      // claimed at defeat, so pickup collection must not credit it again.
+      state.pickups.push({ id: state.nextEntityId++, kind: 'gold-chest', x: enemy.x, y: enemy.y, value: 0 });
+    } else {
+      awardGold(state, 'enemyKills', 1);
+      state.pickups.push({ id: state.nextEntityId++, kind: 'xp-shard', x: enemy.x, y: enemy.y, value: 1 });
+    }
   }
   state.enemies = state.enemies.filter((enemy) => enemy.hp > 0);
   if (state.bossSpawned && !state.enemies.some((enemy) => enemy.isBoss)) {
-    finish(state, 'victory');
+    finishRun(state, 'victory');
     return state;
   }
 
   const collected: PickupState[] = [];
   for (const pickup of state.pickups) {
     if (distance(pickup, state.hero) <= state.hero.stats.magnet) {
-      if (pickup.kind === 'gold-chest') state.gold += pickup.value;
-      else grantXp(state, pickup.value);
+      if (pickup.kind !== 'gold-chest') grantXp(state, pickup.value);
       collected.push(pickup);
     }
   }

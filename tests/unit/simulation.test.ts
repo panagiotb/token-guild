@@ -22,6 +22,7 @@ describe('deterministic run simulation', () => {
     expect(run.phase).toBe('dungeon');
     expect(run.hero.stats.might).toBeCloseTo(0.1);
     expect(run.passives.power_gauntlets).toBe(1);
+    expect(run.upgradeHistory).toEqual(['power_gauntlets']);
     expect(getHeroMoveSpeed(run, 40)).toBe(60);
   });
 
@@ -33,9 +34,28 @@ describe('deterministic run simulation', () => {
     expect(run.enemies.length).toBe(1);
   });
 
+  it('credits a boss chest once and keeps its map marker non-currency', () => {
+    const run = createRun('paladin', 23);
+    run.hero.stats.hp = 1000;
+    run.hero.stats.maxHp = 1000;
+    run.bossSpawned = true;
+    run.enemies.push({ id: 99, kind: 'terminal_exit_boss', x: 0, y: 0, hp: 0, maxHp: 120, speed: 0, damage: 0, isBoss: true, isElite: false });
+    tick(run, 0.25, 0);
+    expect(run.phase).toBe('summary');
+    expect(run.gold).toBe(100);
+    expect(run.goldBreakdown).toEqual({ enemyKills: 0, bossChest: 100 });
+    expect(run.pickups).toEqual([expect.objectContaining({ kind: 'gold-chest', value: 0 })]);
+    expect(run.summary?.gold).toBe(100);
+  });
+
   it('applies persistent Guild upgrades at run start', () => {
     const run = createRun('warrior', 1, { might: 2 });
     expect(run.hero.stats.might).toBeCloseTo(0.1);
+  });
+
+  it('starts every run at level one even when a hero has a higher recorded best', () => {
+    const run = createRun('wizard', 17, { might: 4 });
+    expect(run.level).toBe(1);
   });
 
   it('spawns a boss on deterministic schedule and eventually reaches victory', () => {
@@ -51,6 +71,16 @@ describe('deterministic run simulation', () => {
     expect(run.bossSpawned).toBe(true);
     expect(run.phase).toBe('summary');
     expect(run.outcome).toBe('victory');
+    const summary = run.summary!;
+    expect(summary.heroId).toBe('warrior');
+    expect(summary.heroName).toBe('Warrior');
+    expect(summary.level).toBeGreaterThanOrEqual(1);
+    expect(summary.tokenSource).toBe('synthetic');
+    expect(summary.tokenAccuracy).toBe('exact');
+    expect(summary.enemiesSpawned).toBe(run.enemiesSpawned);
+    expect(summary.gold).toBe(summary.goldBreakdown.enemyKills + summary.goldBreakdown.bossChest);
+    expect(summary.goldBreakdown.bossChest).toBe(100);
+    expect(run.pickups.filter((pickup) => pickup.kind === 'gold-chest').every((pickup) => pickup.value === 0)).toBe(true);
   });
 
   it('keeps the entity pool bounded during a five-minute fixture', () => {

@@ -1,6 +1,6 @@
 # Phase 6 next-milestone plan: summary, hero preview, and reward visibility
 
-Status: **planned and reviewed; implementation intentionally not started**.
+Status: **implementation in progress; Step 6.0 contract freeze recorded in [phase-6-contract.md](../decisions/phase-6-contract.md)**.
 
 This plan follows the execution rules and step-note format in [PROJECT_MANAGEMENT.md](../PROJECT_MANAGEMENT.md). It is the next scoped milestone after the `0.1.0` MVP release gate. It does not expand the stage, add DLC, add real telemetry, import third-party art, or change the map renderer.
 
@@ -13,15 +13,13 @@ This plan follows the execution rules and step-note format in [PROJECT_MANAGEMEN
 
 ## Evidence snapshot
 
-- Current branch is `agent/token-guild-mvp-ui` at commit `406fd8e`; the working tree was clean before this plan file was added.
-- Current checks pass: `npm test` (23 tests), `npm run build`, and `npm run test:e2e` (two Extension Development Host tests). The E2E test opens the webview but does not click through the game DOM.
-- The referenced screenshot shows the current summary as a single output line (`Victory`, enemy count, tokens, gold, and damage) plus two plain actions. It does not show a structured reward, loadout, progression, or gold breakdown.
-- `src/webview/main.ts` currently builds the summary with one `output` value in `finishRun()` and delegates PNG text to `src/webview/shareCard.ts`.
-- `RunSummary` currently contains outcome, elapsed seconds, tokens, gold, enemies defeated, and damage by weapon. It does not contain hero identity/level, enemies spawned, upgrade/loadout state, or explicit gold-source fields.
-- The Guild selector creates options from `classes.json` names only. `PersistedProgress` has no per-hero level or best-level record, so a label such as `Wizard - Level 4` currently has no authoritative source.
-- Gold is accumulated in `RunState.gold`; ordinary enemy kills add gold immediately, and a boss also creates a `gold-chest` pickup. The current code needs an explicit ownership invariant before UI work because immediate reward plus pickup collection can double-count a boss reward.
-- Gold and XP pickups are rendered as small map dots. There is no dedicated run HUD counter or event explanation for gold collected.
-- The PM's top-level `Current status` still describes a documentation-only repository even though its phase checkboxes and release evidence describe the implemented MVP; Step 6.0 must reconcile that status before the next milestone is marked complete.
+- The MVP source is implemented on `agent/token-guild-mvp-ui`; this milestone adds the structured summary, schema-2 hero records, source-broken-down gold ledger, serialized host IPC handling, and focused tests without changing the map renderer or MVP scope.
+- Current checks pass: `npm ci`, `npm run lint`, `npm run typecheck`, `npm test` (32 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), `npm run package`, and `npm audit --omit=dev --audit-level=high` (0 production vulnerabilities). The E2E harness opens the webview but does not click through its DOM.
+- The summary now has outcome, hero/level, duration, tokens/source/accuracy, run gold, Guild wallet, spawned/defeated counts, gold breakdown, upgrades, damage rows, empty states, and local PNG export fields.
+- `RunSummary` owns the privacy-safe aggregate contract; `PersistedProgress.heroRecords` owns highest reached hero levels; the host's idempotent reward operation owns Guild wallet updates.
+- Selector options render `Hero - Level N` with accessible text stating that N is the best run level and new runs start at Level 1.
+- Ordinary enemy gold credits at defeat. Boss gold is claimed once at defeat; the yellow `gold-chest` marker has value 0 and cannot double-credit. Run gold and Guild wallet remain separate until host persistence.
+- PM `Current status` now reflects active MVP implementation and Phase 6 refinement rather than the old documentation-only state.
 
 ## Research and product alignment
 
@@ -63,8 +61,8 @@ Scope: `.dev/progress/phase-6-next-milestone.md`, `src/game/types.ts`, `src/shar
 Risks: inventing persistent character progression or changing reward semantics without a migration and balance rule.  
 Acceptance: D1-D3 are recorded as explicit decisions; every new field has an owner, default, validation rule, persistence behavior, and export/privacy classification.  
 Checks: `npm run typecheck`; focused schema/state tests; review the diff before any UI implementation.  
-Result: pending.  
-Follow-up: start Step 6.1 only after the contract is stable.
+Result: pass. Contract decisions are recorded in [phase-6-contract.md](../decisions/phase-6-contract.md); schema-2 types/validation, legacy/future recovery helpers, reward payload validation, and simulation summary fields are implemented. `npm run typecheck`, `npm run test:synthetic`, and `npm test` pass (32 tests).
+Follow-up: Step 6.1 structured summary UI/export is in progress.
 
 ### Step 6.1 - redesign the run summary
 
@@ -83,8 +81,8 @@ Acceptance:
 - Keyboard focus order, contrast, reduced motion, and narrow-sidebar layout remain valid.
 
 Checks: focused summary/share-card tests; `npm run lint`; `npm run typecheck`; `npm test`; Extension Development Host run through victory and defeat paths where practical.  
-Result: pending.  
-Follow-up: proceed to selector level preview after the summary contract and UI tests pass.
+Result: pass. Structured victory/defeat summary markup, labeled stats, gold/wallet separation, loadout/damage empty states, keyboard-reachable actions, and privacy-safe local export are implemented. `npm run typecheck`, `npm run lint`, and `npm test` pass (32 tests); the Extension Development Host smoke still covers open/activation rather than DOM click-through.
+Follow-up: Step 6.2 authoritative hero level labels and migration QA.
 
 ### Step 6.2 - add hero level preview at run start
 
@@ -102,8 +100,8 @@ Acceptance:
 - A new run's actual `RunState.level` matches the declared D1 behavior.
 
 Checks: migration/default/corruption tests; selector rendering test; deterministic run progression test; `npm test`; E2E activation/open test.  
-Result: pending.  
-Follow-up: use the same hero-level field in the summary panel.
+Result: pass. Schema-2 `heroRecords` migration/recovery, idempotent hero-level reward update, selector formatting helper, and level-one run-start semantics are implemented and tested.
+Follow-up: Step 6.3 gold ledger and runtime feedback review.
 
 ### Step 6.3 - make gold visible and correct
 
@@ -121,8 +119,8 @@ Acceptance:
 - Existing Guild Might purchase behavior remains correct after reward reconciliation.
 
 Checks: table-driven ledger tests; boss-chest no-double-count regression; reward idempotency tests; focused UI/source-label test; full `npm test`; E2E smoke run.  
-Result: pending.  
-Follow-up: run the full milestone review.
+Result: pass. Run-local gold is now source-broken down in the HUD and summary; ordinary defeats credit once, boss defeat uses a one-time claim with a non-currency marker, completion telemetry shares the same guard, and host rewards remain idempotent. Focused ledger tests and the full 30-test suite pass.
+Follow-up: Step 6.4 integrated runtime/release gate.
 
 ### Step 6.4 - milestone runtime review and release gate
 
@@ -139,9 +137,9 @@ Acceptance:
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`, and `npm run package` pass.
 - Evidence is recorded in `.dev/progress/phase-6-next-milestone.md` and the PM checkboxes are updated only for verified criteria.
 
-Checks: full regression suite, isolated VS Code install/smoke, `vsce ls --tree`, package-size check, and manual screenshot review against the referenced image.  
-Result: pending.  
-Follow-up: if all criteria pass, open the next review/packaging checkpoint; otherwise record the exact blocker and keep the milestone open.
+Checks: full regression suite, isolated VS Code install/smoke, `vsce ls --tree`, package-size check, and source/diff review against the referenced image.
+Result: pass for the automated release gate. `npm ci`, lint, typecheck, 32 unit tests, build, E2E (2/2 host tests), package, `vsce ls --tree`, package size (53.13 KB), and production-only audit (0 vulnerabilities) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, upgrades, gold sources, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
+Follow-up: package is ready for review; keep the manual narrow-sidebar playthrough as the next human smoke check.
 
 ## QA matrix
 
@@ -161,6 +159,6 @@ Follow-up: if all criteria pass, open the next review/packaging checkpoint; othe
 - Purchased third-party art integration; current inline icons remain the approved MVP assets.
 - Performance benchmarking beyond existing bounded-resource/stability checks.
 
-## Next action after plan approval
+## Handoff
 
-Begin **Step 6.0** only. Freeze the hero-level semantics, gold ledger ownership, and summary data contract in a decision record; do not begin UI edits until those three decisions and their focused tests are defined.
+Phase 6 implementation is complete for the automated gate. The next review action is a manual narrow-sidebar playthrough using the token-free README smoke test, including a level-up, upgrade selection, victory/defeat summary, both explanation dialogs, return-to-Guild, reload, and reset verification.

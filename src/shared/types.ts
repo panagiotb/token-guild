@@ -1,7 +1,12 @@
 export const PROTOCOL_VERSION = 1 as const;
+export const PROGRESS_SCHEMA_VERSION = 2 as const;
 
 export type Accuracy = 'exact' | 'estimated';
 export type TelemetrySource = 'synthetic' | 'otlp' | 'proxy' | 'buffer';
+
+export interface HeroProgressRecord {
+  readonly highestLevel: number;
+}
 
 export interface TokenStreamEvent {
   readonly source: TelemetrySource;
@@ -14,10 +19,11 @@ export interface TokenStreamEvent {
 }
 
 export interface PersistedProgress {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: typeof PROGRESS_SCHEMA_VERSION;
   readonly gold: number;
   readonly unlockedHeroes: readonly string[];
   readonly upgrades: Readonly<Record<string, number>>;
+  readonly heroRecords: Readonly<Record<string, HeroProgressRecord>>;
   readonly runCount: number;
   readonly totalTokens: number;
   readonly completedRunIds: readonly string[];
@@ -33,6 +39,6 @@ export type HostToWebviewMessage =
 export type WebviewToHostMessage =
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'READY' }
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'SAVE_PROGRESS'; readonly payload: PersistedProgress }
-  | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'RECORD_RUN_REWARD'; readonly payload: { readonly runId: string; readonly gold: number; readonly tokens: number } }
+  | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'RECORD_RUN_REWARD'; readonly payload: { readonly runId: string; readonly gold: number; readonly tokens: number; readonly heroId?: string; readonly level?: number } }
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'START_RUN'; readonly payload: { readonly heroId: string } }
   | { readonly version: typeof PROTOCOL_VERSION; readonly type: 'RESET_PROGRESS' };
