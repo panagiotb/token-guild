@@ -34,7 +34,8 @@ The game uses LLM execution metrics to drive all real-time gameplay loops:
 
 | Metric / Event | Trigger Condition | Game Engine Impact |
 | --- | --- | --- |
-| **Output Tokens** | Every token streamed from agent | $+1\text{ XP}$ towards level up ($XP_{\text{needed}} = 5 \times \text{Level}^2$). |
+| **Output Tokens** | Every token streamed from agent | Counted for telemetry and throughput/combat modifiers; tokens do not grant XP directly in the MVP. |
+| **Gem Pickup** | Enemy gem reaches the hero's pickup radius | $+1\text{ XP}$ and $+1$ ordinary gold in the current first pass. |
 | **Streaming Speed** | High Tokens/Second ($\ge 40\text{ t/s}$) | **Berserk Mode:** Hero movement and attack speed scaled by $1.5\times$. |
 | **Agent Thinking Phase** | No tokens outputted for $\ge 3\text{s}$ | **Power Charge:** Hero charges an area-of-effect ultimate strike. |
 | **Syntax / Lint Error** | Linter error or non-zero terminal exit | **Trap Event:** Enemy counter-strike or hazard damage applied to hero. |

@@ -16,12 +16,18 @@ describe('deterministic run simulation', () => {
   it('pauses at level-up and resumes after choosing a valid card', () => {
     const run = createRun('warrior', 42);
     applyTokenInput(run, { count: 5, tokensPerSecond: 10 });
+    expect(run.totalTokens).toBe(5);
+    expect(run.xp).toBe(0);
+    expect(run.phase).toBe('dungeon');
+    for (let index = 0; index < 5; index += 1) run.pickups.push({ id: index + 1, kind: 'xp-shard', x: 0, y: 0, value: 1 });
+    tick(run, 0.25, 10);
     expect(run.phase).toBe('level-up');
     expect(run.pendingCards.map((card) => card.id)).toEqual(['weapon-upgrade', 'power-gauntlets', 'heal']);
     chooseUpgrade(run, 'power-gauntlets');
     expect(run.phase).toBe('dungeon');
     expect(run.hero.stats.might).toBeCloseTo(0.1);
     expect(run.passives.power_gauntlets).toBe(1);
+    expect(run.goldBreakdown.enemyKills).toBe(5);
     expect(run.upgradeHistory).toEqual(['power_gauntlets']);
     expect(getHeroMoveSpeed(run, 40)).toBe(60);
   });
@@ -65,7 +71,7 @@ describe('deterministic run simulation', () => {
     expect(run.pickups).toEqual([]);
   });
 
-  it('credits ordinary enemy gold only when its coin is collected', () => {
+  it('credits XP and ordinary gold only when its gem is collected', () => {
     const collected = createRun('warrior', 25);
     collected.enemies.push({ id: 1, kind: 'syntax_specter', x: 0, y: 0, hp: 0, maxHp: 28, speed: 0, damage: 0, isBoss: false, isElite: false });
     tick(collected, 0.25, 0);
@@ -78,7 +84,7 @@ describe('deterministic run simulation', () => {
     tick(pending, 0.25, 0);
     expect(pending.gold).toBe(0);
     expect(pending.xp).toBe(0);
-    expect(pending.pickups).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'xp-shard', value: 1 }), expect.objectContaining({ kind: 'gold-coin', value: 1 })]));
+    expect(pending.pickups).toEqual([expect.objectContaining({ kind: 'xp-shard', value: 1 })]);
   });
 
   it('applies persistent Guild upgrades at run start', () => {

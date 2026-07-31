@@ -352,6 +352,7 @@ The scoped follow-up plan and decision record live in [phase-6-next-milestone.md
 - [x] Show authoritative `Hero - Level N` best-run labels while keeping new runs at Level 1.
 - [x] Add labeled run-gold HUD feedback, make coin/chest collection authoritative, prevent boss-marker double counting, and serialize host reward IPC.
 - [x] Stabilize level-up button rendering, align the local PNG export with the on-screen summary, and place responsive map counters/tooltips on the shared panel width.
+- [x] Keep the map interaction loop explicit: level-up choices overlay the map, the dungeon toolbar is one row, and gem collection owns XP plus ordinary gold.
 - [x] Pass locked install, lint, typecheck, unit suite, build, host smoke, package, package audit, and production-only dependency audit.
 - [ ] Complete the manual narrow-sidebar playthrough/screenshot review; the current automated host harness cannot drive webview DOM controls.
 

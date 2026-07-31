@@ -123,7 +123,6 @@ export function createRun(heroId: HeroId, seed = 1, metaUpgrades: Readonly<Recor
 export function applyTokenInput(state: RunState, input: TokenInput): RunState {
   if (state.phase !== 'dungeon' || !Number.isFinite(input.count) || input.count < 0) return state;
   state.totalTokens += input.count;
-  grantXp(state, input.count);
   return state;
 }
 
@@ -197,7 +196,6 @@ export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0)
       state.pickups.push({ id: state.nextEntityId++, kind: 'gold-chest', x: enemy.x, y: enemy.y, value: 100 });
     } else {
       state.pickups.push({ id: state.nextEntityId++, kind: 'xp-shard', x: enemy.x, y: enemy.y, value: 1 });
-      state.pickups.push({ id: state.nextEntityId++, kind: 'gold-coin', x: enemy.x, y: enemy.y, value: 1 });
     }
   }
   state.enemies = state.enemies.filter((enemy) => enemy.hp > 0);
@@ -209,10 +207,10 @@ export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0)
           state.bossRewardClaimed = true;
           awardGold(state, 'bossChest', pickup.value);
         }
-      } else if (pickup.kind === 'gold-coin') {
-        awardGold(state, 'enemyKills', pickup.value);
       } else {
+        // An XP shard is the MVP's gem pickup: collection awards both XP and gold.
         grantXp(state, pickup.value);
+        awardGold(state, 'enemyKills', pickup.value);
       }
       collected.push(pickup);
     }

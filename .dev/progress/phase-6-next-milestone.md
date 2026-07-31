@@ -14,11 +14,11 @@ This plan follows the execution rules and step-note format in [PROJECT_MANAGEMEN
 ## Evidence snapshot
 
 - The MVP source is implemented on `agent/token-guild-mvp-ui`; this milestone adds the structured summary, schema-2 hero records, source-broken-down gold ledger, serialized host IPC handling, and focused tests without changing the map renderer or MVP scope.
-- Current checks pass: `npm run lint`, `npm run typecheck`, `npm test` (34 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), and `npm run package` (57.53 KB). The E2E harness opens the webview but does not click through its DOM.
+- Current checks pass: `npm run lint`, `npm run typecheck`, `npm test` (34 tests), `npm run build`, `npm run test:e2e` (two Extension Development Host tests), and `npm run package` (57.62 KB). The E2E harness opens the webview but does not click through its DOM.
 - The summary now has outcome, hero/level, duration, tokens/source/accuracy, run gold, Guild wallet, spawned/defeated counts, gold breakdown, upgrades, damage rows, empty states, and local PNG export fields.
 - `RunSummary` owns the privacy-safe aggregate contract; `PersistedProgress.heroRecords` owns highest reached hero levels; the host's idempotent reward operation owns Guild wallet updates.
 - Selector options render `Hero - Level N` with accessible text stating that N is the best run level and new runs start at Level 1.
-- Ordinary enemy and boss gold remain pending map pickups until collection. Ordinary coins award +1 and the boss chest awards +100 exactly once when the hero reaches them; run gold and Guild wallet remain separate until host persistence.
+- Ordinary enemy gems and boss gold remain pending map pickups until collection. Each gem awards +1 XP and +1 gold; the boss chest awards +100 exactly once when the hero reaches it. Synthetic token input no longer grants XP; run gold and Guild wallet remain separate until host persistence.
 - PM `Current status` now reflects active MVP implementation and Phase 6 refinement rather than the old documentation-only state.
 
 ## Research and product alignment
@@ -138,7 +138,7 @@ Acceptance:
 - Evidence is recorded in `.dev/progress/phase-6-next-milestone.md` and the PM checkboxes are updated only for verified criteria.
 
 Checks: full regression suite, isolated VS Code install/smoke, `vsce ls --tree`, package-size check, and source/diff review against the referenced image.
-Result: pass for the automated release gate. Lint, typecheck, 34 unit tests, build, E2E (2/2 host tests), and package (57.53 KB) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, stable upgrade rendering, collected/pending gold sources, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
+Result: pass for the automated release gate. Lint, typecheck, 34 unit tests, build, E2E (2/2 host tests), and package (57.62 KB) all pass. Deterministic simulation/state/UI-model tests cover victory, defeat, empty summary states, migration, level labels, stable upgrade rendering, gem-owned XP/gold collection, boss no-double-counting, duplicate rewards, and reset. The repository's Extension Development Host harness does not expose webview DOM automation, so the remaining limitation is a documented manual click-through/screenshot review rather than an unverified code path.
 Follow-up: package is ready for review; keep the manual narrow-sidebar playthrough as the next human smoke check.
 
 ## QA matrix

@@ -51,18 +51,16 @@ app.innerHTML = `
       <dialog id="might-dialog" class="token-dialog"><form method="dialog"><h3>Guild Might</h3><p>Guild Might is a permanent between-run upgrade. Each rank costs 100 gold and adds 5% weapon damage to every future run.</p><ul><li>It persists when you return to the Guild or restart VS Code.</li><li>It affects weapon damage, not token counting or XP.</li><li>It is this MVP's simplified equivalent of a permanent meta-progression PowerUp.</li></ul><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="run-screen" class="screen hidden" aria-labelledby="run-title">
-      <div class="run-heading"><h2 id="run-title">Code Dungeon</h2></div>
-      <div class="map-shell"><div class="map-toolbar" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div><div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas></div></div>
+      <div class="map-shell"><div class="map-toolbar" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><h2 id="run-title">Code Dungeon</h2><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div><div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas><div id="cards" class="cards map-upgrade-overlay hidden" aria-live="polite"></div></div></div>
       <section class="character-panel" aria-labelledby="character-title">
         <div class="character-heading"><div class="character-portrait">${icons.hero}</div><div><h3 id="character-title">Character</h3><p id="character-role">Starting class</p></div><strong id="character-level">Lvl 1</strong></div>
         <div class="character-bars"><div class="bar-row"><span>HP</span><div id="hp-bar" class="stat-bar" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><output id="hp-value">100/100</output></div><div class="bar-row"><span>XP</span><div id="xp-bar" class="stat-bar xp" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><output id="xp-value">0 / 5</output></div></div>
         <div class="character-loadout"><span id="weapon-detail">Weapon</span><span id="passive-detail">Passive</span></div><div id="character-attributes" class="character-attributes" aria-label="Character attributes"></div><div id="character-upgrades" class="character-upgrades" aria-label="Run upgrades"></div>
       </section>
       <div class="run-meta" id="run-meta" aria-live="polite"><div class="enemy-counters" aria-label="Enemy counters"><span class="enemy-counter" id="enemy-spawned" tabindex="0"><span class="counter-icon">${icons.spawned}</span><strong id="enemy-spawned-count">0</strong></span><span class="enemy-counter" id="enemy-defeated" tabindex="0"><span class="counter-icon">${icons.defeated}</span><strong id="enemy-defeated-count">0</strong></span><span class="enemy-counter" id="enemy-active" tabindex="0"><span class="counter-icon">${icons.active}</span><strong id="enemy-active-count">0</strong></span></div><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
-      <div id="cards" class="cards hidden" aria-live="polite"></div>
       <p class="controls">Move with arrow keys or WASD. Synthetic tokens flow while the run is active.</p>
-      <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 3 synthetic tokens every 250 ms, displayed as 12 tokens per second.</p><ul><li>Every token grants 1 XP.</li><li>Token throughput can modify combat; the fixture is intentionally steady.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
-      <dialog id="gold-dialog" class="token-dialog"><form method="dialog"><h3>Gold ledger</h3><p>Run gold is earned when the hero collects a yellow drop and is added to the Guild wallet only once when the run reward is recorded.</p><ul><li>Ordinary enemy coin: +1 gold on collection.</li><li>Boss chest: +100 gold on collection. The yellow map marker remains pending until the hero reaches it.</li><li>Run gold and Guild wallet totals are shown separately on the result screen.</li></ul><p id="gold-breakdown-dialog">No gold earned yet.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
+      <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 3 synthetic tokens every 250 ms, displayed as 12 tokens per second.</p><ul><li>Tokens are counted for telemetry and combat throughput.</li><li>Collected gem pickups grant 1 XP and 1 gold in this first pass.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
+      <dialog id="gold-dialog" class="token-dialog"><form method="dialog"><h3>Gold ledger</h3><p>Run gold is earned when the hero collects a map pickup and is added to the Guild wallet only once when the run reward is recorded.</p><ul><li>Enemy gem: +1 XP and +1 gold on collection.</li><li>Boss chest: +100 gold on collection. The yellow map marker remains pending until the hero reaches it.</li><li>Run gold and Guild wallet totals are shown separately on the result screen.</li></ul><p id="gold-breakdown-dialog">No gold earned yet.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="summary-screen" class="screen hidden" aria-labelledby="summary-title">
       <h2 id="summary-title">Run Summary</h2><output id="summary" class="sr-only" role="status"></output>
@@ -159,8 +157,8 @@ function renderWorld(): void {
   const screenX = (x: number) => canvas.width / 2 + x;
   const screenY = (y: number) => canvas.height / 2 + y;
   for (const pickup of run.pickups) {
-    const isGold = pickup.kind === 'gold-chest' || pickup.kind === 'gold-coin';
-    const size = pickup.kind === 'gold-chest' ? 6 : pickup.kind === 'gold-coin' ? 3 : 4;
+    const isGold = pickup.kind === 'gold-chest';
+    const size = isGold ? 6 : 4;
     context.fillStyle = isGold ? '#f0c94b' : '#70c8ff';
     context.fillRect(screenX(pickup.x) - size / 2, screenY(pickup.y) - size / 2, size, size);
   }
@@ -232,9 +230,9 @@ function renderRun(): void {
   setCounter('enemy-defeated', run.enemiesDefeated, 'Enemies defeated');
   setCounter('enemy-active', run.enemies.length, 'Enemies currently active');
   setText('gold-hud', String(run.gold));
-  setText('gold-breakdown-dialog', `Current run: ${run.gold} gold · Enemy defeats ${run.goldBreakdown.enemyKills} · Boss chest ${run.goldBreakdown.bossChest}`);
+  setText('gold-breakdown-dialog', `Current run: ${run.gold} gold · Enemy gems ${run.goldBreakdown.enemyKills} · Boss chest ${run.goldBreakdown.bossChest}`);
   const goldInfo = document.querySelector<HTMLButtonElement>('#gold-info');
-  if (goldInfo) goldInfo.title = `Gold ${run.gold}: enemy defeats ${run.goldBreakdown.enemyKills}, boss chest ${run.goldBreakdown.bossChest}`;
+  if (goldInfo) goldInfo.title = `Gold ${run.gold}: enemy gems ${run.goldBreakdown.enemyKills}, boss chest ${run.goldBreakdown.bossChest}`;
   if (run.phase !== previousPhase) {
     if (run.phase === 'level-up') audioManager.playTone(660, 140);
     if (run.phase === 'summary') audioManager.playTone(run.outcome === 'victory' ? 880 : 180, 240);

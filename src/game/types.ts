@@ -3,7 +3,7 @@ import type { Accuracy, TelemetrySource, TokenStreamEvent } from '../shared/type
 export type HeroId = 'warrior' | 'wizard' | 'rogue' | 'ranger' | 'paladin' | 'necromancer';
 export type RunPhase = 'dungeon' | 'level-up' | 'summary';
 export type RunOutcome = 'victory' | 'defeat';
-export type PickupKind = 'xp-shard' | 'xp-crystal' | 'xp-orb' | 'gold-coin' | 'gold-chest';
+export type PickupKind = 'xp-shard' | 'xp-crystal' | 'xp-orb' | 'gold-chest';
 
 export interface CombatStats {
   hp: number;

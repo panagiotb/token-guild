@@ -5,13 +5,12 @@ body { margin: 0; background: var(--vscode-sideBar-background, #171717); color: 
 .guild-header { align-items: center; min-height: 36px; padding: .4rem .55rem; border: 1px solid color-mix(in srgb, var(--guild-crimson) 65%, var(--vscode-panel-border, #444)); border-radius: 6px; background: color-mix(in srgb, var(--vscode-sideBar-background, #171717) 88%, var(--guild-crimson-soft)); }
 .guild-header h1 { margin: 0; font-size: 1rem; line-height: 1.1; letter-spacing: .02em; }
 .header-actions { display: flex; gap: .25rem; }
-.run-heading { justify-content: center; }
-.run-heading h2 { margin: 0; text-align: center; }
 .screen { display: grid; gap: .6rem; }
 .hidden { display: none !important; }
 .map-shell { width: 100%; max-width: 520px; margin: 0 auto; }
 .map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; margin-bottom: .35rem; }
-.map-frame { width: 100%; }
+.map-toolbar h2 { flex: 1; min-width: 0; margin: 0; text-align: center; font-size: 1.1rem; white-space: nowrap; }
+.map-frame { position: relative; width: 100%; }
 canvas { display: block; width: 100%; max-width: none; height: auto; image-rendering: pixelated; border: 1px solid var(--vscode-panel-border, #444); }
 .map-counter { display: inline-flex; align-items: center; gap: .22rem; min-height: 24px; padding: .18rem .3rem; color: #e7e2ee; background: rgb(10 13 22 / 78%); border: 1px solid rgb(255 255 255 / 16%); border-radius: 4px; font-size: .68rem; font-family: ui-monospace, monospace; }
 .map-counter strong { font-weight: 700; }
@@ -22,6 +21,7 @@ canvas { display: block; width: 100%; max-width: none; height: auto; image-rende
 select { width: 100%; box-sizing: border-box; padding: .4rem .5rem; color: inherit; background: var(--vscode-input-background, #222); border: 1px solid var(--vscode-input-border, #444); border-radius: 4px; }
 output { color: var(--vscode-descriptionForeground, #aaa); font-size: .8rem; }
 .cards { display: grid; gap: .45rem; }
+.map-upgrade-overlay { position: absolute; inset: .55rem; z-index: 2; align-content: end; padding: .55rem; background: linear-gradient(180deg, rgb(12 15 24 / 12%), rgb(12 15 24 / 94%) 42%); border: 1px solid color-mix(in srgb, var(--guild-crimson) 72%, var(--vscode-panel-border, #444)); border-radius: 6px; }
 .upgrade-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .35rem; }
 .upgrade-card { min-width: 0; min-height: 56px; display: flex; align-items: center; gap: .45rem; text-align: left; padding: .45rem; background: var(--vscode-button-secondaryBackground, #303030); border: 1px solid var(--vscode-panel-border, #444); transition: none; }
 .upgrade-card:hover { background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground, #454545) 82%, var(--guild-crimson-soft)); border-color: var(--guild-crimson-muted); }

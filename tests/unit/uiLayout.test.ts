@@ -33,6 +33,9 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('id="enemy-defeated"');
     expect(main).toContain('id="enemy-active"');
     expect(main).toContain('class="map-toolbar"');
+    expect(main).toContain('class="map-toolbar" aria-label="Dungeon counters"><span');
+    expect(main).toContain('<h2 id="run-title">Code Dungeon</h2><button');
+    expect(main).toContain('class="cards map-upgrade-overlay hidden"');
     expect(main).toContain('renderUpgradeCards');
     expect(main).toContain('downloadShareCard(run.summary, progress.gold)');
     expect(main).toContain('counter.dataset.tooltip');
@@ -43,5 +46,6 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('summary-token-source');
     expect(main).toContain('gold-breakdown-dialog');
     expect(main).toContain('heroRecords');
+    expect(main).toContain('Collected gem pickups grant 1 XP and 1 gold');
   });
 });
