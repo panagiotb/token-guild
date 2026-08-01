@@ -2,6 +2,7 @@ import type * as vscode from 'vscode';
 import { PROGRESS_SCHEMA_VERSION } from '../shared/types';
 import type { HeroProgressRecord, PersistedProgress } from '../shared/types';
 import { validateProgress } from '../shared/validation';
+import { metaUpgradeCost, metaUpgradeDefinition, metaUpgradeRefund } from '../game/meta';
 
 const STORAGE_KEY = 'tokenGuild.progress';
 const HERO_IDS = ['warrior', 'wizard', 'rogue', 'ranger', 'paladin', 'necromancer'] as const;
@@ -55,7 +56,9 @@ function safeSettings(value: unknown): { muted: boolean; volume: number } {
 export const DEFAULT_PROGRESS: PersistedProgress = {
   schemaVersion: PROGRESS_SCHEMA_VERSION,
   gold: 0,
-  unlockedHeroes: [...HERO_IDS],
+  unlockedHeroes: ['warrior'],
+  unlockedStages: ['code-dungeon'],
+  relics: [],
   upgrades: {},
   heroRecords: defaultHeroRecords(),
   runCount: 0,
@@ -73,11 +76,15 @@ export const DEFAULT_PROGRESS: PersistedProgress = {
 export function migrateProgress(raw: unknown): PersistedProgress {
   if (!isRecord(raw)) return DEFAULT_PROGRESS;
   const unlockedHeroes = safeStringArray(raw.unlockedHeroes, DEFAULT_PROGRESS.unlockedHeroes, 64);
+  const unlockedStages = safeStringArray(raw.unlockedStages, DEFAULT_PROGRESS.unlockedStages, 64);
+  const relics = safeStringArray(raw.relics, DEFAULT_PROGRESS.relics, 64);
   const completedRunIds = safeStringArray(raw.completedRunIds, [], 128);
   const candidate: PersistedProgress = {
     schemaVersion: PROGRESS_SCHEMA_VERSION,
     gold: nonNegativeNumber(raw.gold, DEFAULT_PROGRESS.gold),
     unlockedHeroes,
+    unlockedStages,
+    relics,
     upgrades: safeUpgrades(raw.upgrades),
     heroRecords: safeHeroRecords(raw.heroRecords, unlockedHeroes),
     runCount: nonNegativeNumber(raw.runCount, DEFAULT_PROGRESS.runCount),
@@ -116,6 +123,30 @@ export class StateManager {
     await this.storage.update(STORAGE_KEY, DEFAULT_PROGRESS);
   }
 
+  public async purchaseUpgrade(progress: PersistedProgress, upgradeId: string): Promise<PersistedProgress> {
+    const current = validateProgress(progress);
+    const definition = metaUpgradeDefinition(upgradeId);
+    if (!definition) throw new Error('Unknown meta upgrade');
+    const rank = current.upgrades[upgradeId] ?? 0;
+    const cost = metaUpgradeCost(upgradeId, rank);
+    if (!Number.isFinite(cost) || rank >= definition.maxRank) throw new Error('Meta upgrade is at maximum rank');
+    if (current.gold < cost) throw new Error('Insufficient gold');
+    return this.saveAndReturn({ ...current, gold: current.gold - cost, upgrades: { ...current.upgrades, [upgradeId]: rank + 1 } });
+  }
+
+  public async refundUpgrades(progress: PersistedProgress): Promise<PersistedProgress> {
+    const current = validateProgress(progress);
+    const refund = metaUpgradeRefund(current.upgrades);
+    const upgrades = { ...current.upgrades };
+    for (const key of Object.keys(upgrades)) if (metaUpgradeDefinition(key)) delete upgrades[key];
+    return this.saveAndReturn({ ...current, gold: current.gold + refund, upgrades });
+  }
+
+  private async saveAndReturn(next: PersistedProgress): Promise<PersistedProgress> {
+    await this.save(next);
+    return next;
+  }
+
   public async applyRunReward(progress: PersistedProgress, runId: string, gold: number, tokens: number, heroId?: string, level?: number): Promise<PersistedProgress> {
     const current = validateProgress(progress);
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(runId)) throw new Error('Invalid run ID');
@@ -128,7 +159,19 @@ export class StateManager {
       const previous = heroRecords[heroId]?.highestLevel ?? 1;
       heroRecords[heroId] = { highestLevel: Math.max(previous, level) };
     }
-    const next: PersistedProgress = { ...current, gold: current.gold + gold, totalTokens: current.totalTokens + tokens, runCount: current.runCount + 1, completedRunIds: [...current.completedRunIds, runId], heroRecords };
+    const nextRunCount = current.runCount + 1;
+    const nextGold = current.gold + gold;
+    const nextUnlocked = new Set(current.unlockedHeroes);
+    if (heroId === 'warrior' && (level ?? 0) >= 5) nextUnlocked.add('wizard');
+    if (nextGold >= 100) nextUnlocked.add('rogue');
+    if (nextRunCount >= 3) nextUnlocked.add('ranger');
+    if ((level ?? 0) >= 10) nextUnlocked.add('paladin');
+    if (nextRunCount >= 5) nextUnlocked.add('necromancer');
+    const nextRelics = new Set(current.relics);
+    if (nextRunCount >= 1) nextRelics.add('magic-banger');
+    if ((level ?? 0) >= 10) nextRelics.add('grim-grimoire');
+    if (nextRunCount >= 3) nextRelics.add('milky-way-map');
+    const next: PersistedProgress = { ...current, gold: nextGold, totalTokens: current.totalTokens + tokens, runCount: nextRunCount, completedRunIds: [...current.completedRunIds, runId], heroRecords, unlockedHeroes: [...nextUnlocked], relics: [...nextRelics] };
     await this.save(next);
     return next;
   }

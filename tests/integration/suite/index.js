@@ -10,11 +10,15 @@ suite('Token Guild extension', () => {
     assert.ok(commands.includes('tokenGuild.resetProgress'));
   });
 
-  test('declares and opens the synthetic webview without token telemetry', async () => {
+  test('declares and opens the webview with explicit synthetic and opt-in OTLP modes', async () => {
     const extension = vscode.extensions.getExtension('evdaimon-games.token-guild');
     assert.ok(extension);
     const view = extension.packageJSON.contributes.views.tokenGuild.find((entry) => entry.id === 'tokenGuild.guildView');
     assert.equal(view?.type, 'webview', 'Guild must be registered as a webview, not a tree view');
+    const settings = extension.packageJSON.contributes.configuration.properties;
+    assert.equal(settings['tokenGuild.telemetry.syntheticEnabled'].default, true);
+    assert.equal(settings['tokenGuild.telemetry.otlpEnabled'].default, false);
+    assert.equal(settings['tokenGuild.telemetry.otlpPort'].default, 4318);
     await vscode.commands.executeCommand('workbench.view.extension.tokenGuild');
   });
 });

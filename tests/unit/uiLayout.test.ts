@@ -66,5 +66,11 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('gold-breakdown-dialog');
     expect(main).toContain('heroRecords');
     expect(main).toContain('Collected gem pickups grant 1 XP and 1 gold');
+    expect(main).toContain('id="game-announce"');
+    expect(main).toContain('function drawHero');
+    expect(main).toContain('function drawEnemy');
+    expect(main).toContain('activeFeedbackCues');
+    expect(css).toContain('prefers-reduced-motion');
+    expect(css).toContain('aspect-ratio: 8 / 5');
   });
 });

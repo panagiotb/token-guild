@@ -34,10 +34,10 @@ export function validateTokenStreamEvent(value: unknown): TokenStreamEvent {
 }
 
 export function validateProgress(value: unknown): PersistedProgress {
-  if (!isRecord(value) || value.schemaVersion !== PROGRESS_SCHEMA_VERSION || !isFiniteNumber(value.gold) || !isFiniteNumber(value.runCount) || !isFiniteNumber(value.totalTokens) || !isFiniteNumber(value.batteryLevel) || !Array.isArray(value.unlockedHeroes) || !Array.isArray(value.completedRunIds) || !isRecord(value.upgrades) || !isRecord(value.heroRecords) || !isRecord(value.settings)) {
+  if (!isRecord(value) || value.schemaVersion !== PROGRESS_SCHEMA_VERSION || !isFiniteNumber(value.gold) || !isFiniteNumber(value.runCount) || !isFiniteNumber(value.totalTokens) || !isFiniteNumber(value.batteryLevel) || !Array.isArray(value.unlockedHeroes) || !Array.isArray(value.unlockedStages) || !Array.isArray(value.relics) || !Array.isArray(value.completedRunIds) || !isRecord(value.upgrades) || !isRecord(value.heroRecords) || !isRecord(value.settings)) {
     throw new Error('Invalid persisted progress');
   }
-  if (value.gold < 0 || value.runCount < 0 || value.totalTokens < 0 || !Number.isInteger(value.batteryLevel) || value.batteryLevel < 1 || value.batteryLevel > 5 || value.unlockedHeroes.some((hero) => typeof hero !== 'string' || !isSafeKey(hero, 64)) || value.completedRunIds.some((runId) => typeof runId !== 'string' || runId.length === 0 || runId.length > 128)) {
+  if (value.gold < 0 || value.runCount < 0 || value.totalTokens < 0 || !Number.isInteger(value.batteryLevel) || value.batteryLevel < 1 || value.batteryLevel > 5 || value.unlockedHeroes.some((hero) => typeof hero !== 'string' || !isSafeKey(hero, 64)) || value.unlockedStages.some((stage) => typeof stage !== 'string' || !isSafeKey(stage, 64)) || value.relics.some((relic) => typeof relic !== 'string' || !isSafeKey(relic, 64)) || value.completedRunIds.some((runId) => typeof runId !== 'string' || runId.length === 0 || runId.length > 128)) {
     throw new Error('Persisted progress contains invalid values');
   }
   for (const [upgradeId, rank] of Object.entries(value.upgrades)) {

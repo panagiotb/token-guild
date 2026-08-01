@@ -15,11 +15,13 @@ function filenamePart(value: string): string {
 
 export function buildShareCardText(summary: ShareCardSummary, guildGold = 0): string {
   const outcome = summary.outcome.charAt(0).toUpperCase() + summary.outcome.slice(1);
-  return `${outcome} · ${summary.heroName} · Level ${summary.level} · ${summary.tokens} tokens (${summary.tokenSource}/${summary.tokenAccuracy}) · ${summary.gold} gold · ${summary.enemiesSpawned}/${summary.enemiesDefeated} enemies · ${Math.floor(summary.elapsedSeconds)}s · Guild wallet ${guildGold}`;
+  const treasureCount = summary.treasureRewards?.length ?? 0;
+  return `${outcome} · ${summary.heroName} · Level ${summary.level} · ${summary.tokens} tokens (${summary.tokenSource}/${summary.tokenAccuracy}) · ${summary.gold} gold · ${summary.enemiesSpawned}/${summary.enemiesDefeated} enemies · ${Math.floor(summary.elapsedSeconds)}s · ${treasureCount} treasure · Guild wallet ${guildGold}`;
 }
 
 export function shareCardFilename(summary: ShareCardSummary): string {
-  return `token-guild-${filenamePart(summary.heroName)}-lvl-${summary.level}-${summary.outcome}-${Math.floor(summary.elapsedSeconds)}s-${summary.tokens}tokens.png`;
+  const treasureCount = summary.treasureRewards?.length ?? 0;
+  return `token-guild-${filenamePart(summary.heroName)}-lvl-${summary.level}-${summary.outcome}-${Math.floor(summary.elapsedSeconds)}s-${summary.tokens}tokens-${summary.gold}gold-${treasureCount}treasure.png`;
 }
 
 function panel(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, fill = '#1e1a22'): void {
@@ -39,7 +41,7 @@ function metric(context: CanvasRenderingContext2D, x: number, y: number, width: 
 
 export function downloadShareCard(summary: ShareCardSummary, guildGold: number): void {
   const view = buildSummaryViewModel(summary, guildGold);
-  const card = document.createElement('canvas'); card.width = 1200; card.height = 820;
+  const card = document.createElement('canvas'); card.width = 1200; card.height = 960;
   const context = card.getContext('2d'); if (!context) throw new Error('Share-card canvas unavailable');
   context.fillStyle = '#111116'; context.fillRect(0, 0, card.width, card.height);
   context.fillStyle = '#d5a83a'; context.font = 'bold 46px system-ui'; context.fillText('Token Guild', 56, 70);
@@ -58,17 +60,26 @@ export function downloadShareCard(summary: ShareCardSummary, guildGold: number):
   context.fillStyle = '#f4f0ff'; context.font = '21px system-ui'; context.fillText(view.goldBreakdown, 76, 385);
   context.fillStyle = '#ad9fae'; context.font = '17px system-ui'; context.fillText(`${summary.tokenSource} / ${summary.tokenAccuracy} token accuracy`, 76, 410);
 
-  panel(context, 56, 448, 532, 250);
-  context.fillStyle = '#e5a8b3'; context.font = 'bold 22px system-ui'; context.fillText('Selected upgrades', 76, 484);
+  panel(context, 56, 448, 532, 390);
+  context.fillStyle = '#e5a8b3'; context.font = 'bold 22px system-ui'; context.fillText('Build & treasure', 76, 484);
+  context.fillStyle = '#ad9fae'; context.font = 'bold 16px system-ui'; context.fillText('Upgrades', 78, 516);
+  const upgrades = view.upgrades.slice(0, 6);
   context.fillStyle = '#f4f0ff'; context.font = '19px system-ui';
-  view.upgrades.slice(0, 8).forEach((upgrade, index) => context.fillText(`· ${formatId(upgrade)}`, 78, 522 + index * 25));
+  upgrades.forEach((upgrade, index) => context.fillText(`· ${formatId(upgrade)}`, 78, 542 + index * 25));
+  if (view.upgrades.length > upgrades.length) context.fillText(`· +${view.upgrades.length - upgrades.length} more`, 78, 542 + upgrades.length * 25);
+  const treasureY = 575 + upgrades.length * 25 + (view.upgrades.length > upgrades.length ? 25 : 0);
+  context.fillStyle = '#ad9fae'; context.font = 'bold 16px system-ui'; context.fillText('Treasure', 78, treasureY);
+  context.fillStyle = '#f4f0ff'; context.font = '19px system-ui';
+  const treasure = view.treasureRewards.slice(0, 3);
+  treasure.forEach((reward, index) => context.fillText(`· ${formatId(reward)}`, 78, treasureY + 26 + index * 25));
+  if (view.treasureRewards.length > treasure.length) context.fillText(`· +${view.treasureRewards.length - treasure.length} more`, 78, treasureY + 26 + treasure.length * 25);
 
-  panel(context, 612, 448, 532, 250);
+  panel(context, 612, 448, 532, 390);
   context.fillStyle = '#e5a8b3'; context.font = 'bold 22px system-ui'; context.fillText('Damage by weapon', 632, 484);
   context.fillStyle = '#f4f0ff'; context.font = '19px system-ui';
   if (view.damage.length === 0) context.fillText('· No weapon damage recorded', 634, 522);
-  view.damage.slice(0, 8).forEach((entry, index) => context.fillText(`· ${formatId(entry.weapon)} · ${Math.round(entry.amount)} damage`, 634, 522 + index * 25));
+  view.damage.slice(0, 11).forEach((entry, index) => context.fillText(`· ${formatId(entry.weapon)} · ${Math.round(entry.amount)} damage`, 634, 522 + index * 25));
 
-  context.fillStyle = '#756b78'; context.font = '16px system-ui'; context.fillText('Local export · no prompts, paths, or raw telemetry', 56, 768);
+  context.fillStyle = '#756b78'; context.font = '16px system-ui'; context.fillText('Local export · no prompts, paths, or raw telemetry', 56, 886);
   const link = document.createElement('a'); link.download = shareCardFilename(summary); link.href = card.toDataURL('image/png'); link.click();
 }

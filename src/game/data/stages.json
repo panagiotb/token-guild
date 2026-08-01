@@ -2,12 +2,19 @@
   {
     "id": "code-dungeon",
     "name": "Code Dungeon",
-    "durationSeconds": 30,
-    "boss": "terminal_exit_boss",
+    "durationSeconds": 1800,
+    "boss": "timeout_reaper",
     "waves": [
-      { "fromSecond": 0, "enemy": "syntax_specter", "spawnEverySeconds": 1 },
-      { "fromSecond": 10, "enemy": "bug_bat", "spawnEverySeconds": 1 },
-      { "fromSecond": 20, "enemy": "memory_golem", "spawnEverySeconds": 1 }
+      { "id": "training-bats", "fromSecond": 0, "untilSecond": 300, "enemy": "bug_bat", "spawnEverySeconds": 1.5, "minimumAlive": 4, "maximumAlive": 20 },
+      { "id": "training-spectres", "fromSecond": 0, "untilSecond": 300, "enemy": "syntax_specter", "spawnEverySeconds": 2, "minimumAlive": 3, "maximumAlive": 16 },
+      { "id": "legacy-zombies", "fromSecond": 300, "untilSecond": 600, "enemy": "deprecated_zombie", "spawnEverySeconds": 1.25, "minimumAlive": 5, "maximumAlive": 24 },
+      { "id": "dead-code-phantoms", "fromSecond": 300, "untilSecond": 600, "enemy": "unused_variable_phantom", "spawnEverySeconds": 1.75, "minimumAlive": 4, "maximumAlive": 18 },
+      { "id": "memory-leaks", "fromSecond": 600, "untilSecond": 900, "enemy": "memory_golem", "spawnEverySeconds": 2, "minimumAlive": 4, "maximumAlive": 20 },
+      { "id": "compiler-hydra-event", "fromSecond": 600, "untilSecond": 601, "enemy": "compiler_hydra", "spawnEverySeconds": 1, "minimumAlive": 1, "maximumAlive": 1 },
+      { "id": "loop-fiends", "fromSecond": 900, "untilSecond": 1200, "enemy": "infinite_loop_fiend", "spawnEverySeconds": 1.5, "minimumAlive": 5, "maximumAlive": 24 },
+      { "id": "mixed-swarm-bats", "fromSecond": 1200, "untilSecond": 1500, "enemy": "bug_bat", "spawnEverySeconds": 0.75, "minimumAlive": 8, "maximumAlive": 30 },
+      { "id": "mixed-swarm-zombies", "fromSecond": 1200, "untilSecond": 1500, "enemy": "deprecated_zombie", "spawnEverySeconds": 1.25, "minimumAlive": 6, "maximumAlive": 24 },
+      { "id": "enraged-loop-fiends", "fromSecond": 1500, "untilSecond": 1800, "enemy": "infinite_loop_fiend", "spawnEverySeconds": 0.75, "minimumAlive": 10, "maximumAlive": 36 }
     ]
   }
 ]

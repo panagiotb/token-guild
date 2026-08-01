@@ -55,7 +55,14 @@
         "tokenGuild.telemetry.otlpEnabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable the experimental loopback OTLP adapter."
+          "description": "Enable the opt-in loopback OTLP/HTTP JSON trace adapter. It listens only on localhost and never stores raw traces."
+        },
+        "tokenGuild.telemetry.otlpPort": {
+          "type": "number",
+          "default": 4318,
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Local port for the opt-in OTLP/HTTP JSON trace adapter (0 chooses an ephemeral port for development)."
         }
       }
     }

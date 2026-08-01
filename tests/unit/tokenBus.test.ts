@@ -30,11 +30,18 @@ describe('TokenBus', () => {
     expect(output[0]).toMatchObject({ count: 5, inputTokens: 30, cacheTokens: 300, isAgentActive: true });
   });
 
-  it('classifies idle, streaming, berserk, and thinking states', () => {
+  it('classifies idle and streaming states without combat modes', () => {
     const bus = new TokenBus(() => undefined);
     bus.ingest(event(100, 1, 10)); expect(bus.statusAt(100)).toBe('streaming');
-    bus.ingest(event(200, 1, 40)); expect(bus.statusAt(200)).toBe('berserk');
-    bus.ingest(event(300, 0, 0)); expect(bus.statusAt(3400)).toBe('thinking');
+    bus.ingest(event(200, 1, 40)); expect(bus.statusAt(200)).toBe('streaming');
+    bus.ingest(event(300, 0, 0)); expect(bus.statusAt(300)).toBe('idle');
     expect(bus.statusAt(5401)).toBe('idle');
+  });
+
+  it('bounds duplicate memory while retaining recent dedupe protection', () => {
+    const bus = new TokenBus(() => undefined, 250, 2);
+    bus.ingest(event(100, 1)); bus.ingest(event(200, 1)); bus.ingest(event(300, 1));
+    bus.ingest(event(100, 1));
+    expect(bus.getPendingCount()).toBe(4);
   });
 });

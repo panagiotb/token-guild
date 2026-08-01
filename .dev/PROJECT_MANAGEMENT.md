@@ -1,131 +1,83 @@
 # Token Guild project management
 
-This is the living execution plan. Current behavior is documented in [CURRENT_MANUAL.md](CURRENT_MANUAL.md); gameplay gaps and order are in [VAMPIRE_SURVIVORS_PARITY_TODO.md](VAMPIRE_SURVIVORS_PARITY_TODO.md).
+This is the living execution contract. [CURRENT_MANUAL.md](CURRENT_MANUAL.md) describes verified behavior; [VAMPIRE_SURVIVORS_PARITY_TODO.md](VAMPIRE_SURVIVORS_PARITY_TODO.md) is the ordered gap list; [plans/](plans/) records milestone research and acceptance evidence.
 
 ## Current status
 
-- **Release:** `0.1.0` deterministic vertical slice.
-- **Lifecycle:** working foundation; not yet an authentic survivor-game implementation.
-- **Renderer:** Canvas 2D map with DOM UI.
-- **Telemetry:** synthetic fixture only in the playable UI.
-- **Quality evidence:** on 2026-08-01, 47 unit tests, lint, typecheck, build, two Extension Development Host smoke tests, and VSIX packaging all passed; the package is 65.12 KB.
-- **Accepted gameplay divergences:** token battery and Token Guild gold acquisition only.
-- **Open release check:** manual narrow/wide-sidebar click-through because host smoke tests cannot drive the webview DOM.
-- **Next implementation milestone:** P0 mechanically honest first stage from the parity backlog.
+- **Release:** `0.1.0` deterministic Canvas/DOM vertical slice.
+- **Completed:** P0 rules/combat, P1 Code Dungeon stage loop, P2 pickups/treasure/evolution, P3 meta progression/unlocks, P4 production telemetry, P5 presentation/game feel.
+- **Renderer:** original Canvas/vector silhouettes with DOM controls; no external art packaged.
+- **Telemetry:** synthetic fixture by default; opt-in loopback OTLP/HTTP JSON adapter on localhost with bounded input, dedupe, and teardown.
+- **Quality evidence:** 73 unit tests, strict typecheck, lint, build, VSIX package, and `git diff --check` pass on 2026-08-01. Host smoke opens the contributed webview but does not automate DOM clicks.
+- **Accepted divergences:** token battery gameplay and Token Guild gold acquisition only.
+- **Next work:** none is implicitly active. Every future unattended run must choose one parity item and write a plan first.
 
-## Scope
+## Scope boundary
 
-The next pass remains MVP-only:
+The project remains MVP-only:
 
-- establish correct base mechanics before adding broad content;
-- keep one stage and the current six-character slice until foundations pass;
-- keep synthetic telemetry for deterministic QA while building one real source later;
-- exclude DLC, secret content, advanced modes, marketplace publication, and performance targets;
-- use original/placeholders until specific licensed assets pass provenance review.
-
-The mapping folder is a reference library, not a completion checklist. A mapping document never satisfies implementation acceptance.
+- preserve one proven stage and bounded first-pass content until a later decision expands it;
+- keep deterministic synthetic telemetry for QA and require explicit opt-in for real telemetry;
+- exclude DLC, secrets, advanced modes, marketplace publishing, external assets without provenance, and performance targets;
+- do not add a gameplay divergence without a decision record and parity-backlog update.
 
 ## Unattended execution rules
 
 1. **Working solution first.** Implement the smallest complete user flow for the active milestone. Put optional polish, generalization, compatibility, and extra content in the backlog.
-2. **One step in progress.** Before changing code, record a step note below with objective, dependencies, allowed scope, risks, acceptance, and commands. Do not start a dependent step until the current one passes.
-3. **Tests travel with behavior.** Add deterministic tests with the foundation. Cover success, boundary, invalid input, failure, persistence/teardown, and duplicate-event paths relevant to the change.
-4. **Exercise the real boundary.** Pure tests are required for rules; integration tests are required for IPC/persistence; browser/host or a recorded manual check is required for user interaction. A clean build alone does not prove behavior.
-5. **Do not weaken a gate.** Diagnose the smallest failing case, apply one focused fix, rerun the focused test, then rerun the affected regression suite.
-6. **Replan on discovery.** If code disproves an assumption or exposes a dependency, update the step and backlog before proceeding. Never silently expand scope.
-7. **Keep checkpoints reviewable.** Leave the workspace buildable after every passing step. Avoid unrelated refactors, generated artifacts, or speculative abstractions.
-8. **Preserve product decisions.** Battery and gold divergences remain; all other mechanics target the approved base-game reference unless a new decision record is added.
-9. **Respect authority.** Local implementation, tests, builds, approved online research/downloads, and documentation are autonomous. Stop before external publication/messages, credentials, destructive operations, network exposure, licensing decisions, or material scope changes.
-10. **Report honestly.** A helper, registry record, mock, or unit test is not shipped functionality until wired through the production path. Record limitations explicitly.
-11. **Leave a handoff.** End every unattended run with completed work, commands/results, remaining failures/risks, and the exact next step.
+2. **Plan every step.** Before changing code, write or update a plan with objective, dependencies, allowed scope, risks, acceptance, and commands. Review the plan before implementation.
+3. **One step in progress.** Do not start a dependent step until the current step passes its focused and regression gates.
+4. **Tests travel with behavior.** Cover success, boundary, invalid input, failure, persistence/teardown, and duplicate-event paths relevant to each change.
+5. **Exercise real boundaries.** Pure tests cover rules; integration tests cover IPC/persistence; host/browser or a recorded manual check covers user interaction. A clean build alone is not proof.
+6. **Do not weaken a gate.** Diagnose the smallest failing case, apply one focused fix, rerun the focused test, then rerun the affected regression suite.
+7. **Replan on discovery.** If code disproves an assumption or exposes a dependency, update the plan and backlog before proceeding; never silently expand scope.
+8. **Keep checkpoints reviewable.** Leave the workspace buildable after every passing step; avoid unrelated refactors, generated artifacts, or speculative abstractions.
+9. **Preserve product decisions.** Battery and gold divergences remain; all other mechanics target the approved base-game reference unless a new decision record is added.
+10. **Respect authority.** Local implementation, tests, builds, approved online research, and documentation are autonomous. Stop before external publication/messages, credentials, destructive operations, network exposure, licensing decisions, or material scope changes.
+11. **Report honestly.** A helper, registry record, mock, or unit test is not shipped functionality until wired through the production path. Record limitations explicitly.
+12. **Leave a handoff.** End every unattended run with completed work, commands/results, remaining risks, and the exact next step.
 
 ## Standard step cycle
 
 1. Inspect repository status, current manual, active backlog item, implementation, and related tests.
-2. Add or update the active step note.
+2. Add or update the active plan on disk; include research and source links when facts may change.
 3. Implement one foundation slice and its tests.
 4. Run focused tests, then the relevant regression gate.
 5. Review the diff for scope, security/privacy, reward ownership, migration safety, asset provenance, and generated files.
-6. Update the manual only for verified user-facing behavior and mark backlog items only when their acceptance gate passes.
-7. Leave the next step unambiguous.
-
-## Step note template
-
-```text
-Step: <milestone.step> — <short name>
-Status: planned | in progress | passed | blocked
-Objective: <one observable outcome>
-Dependencies: <passed steps/decisions or none>
-Scope: <files and systems allowed to change>
-Risks: <gameplay, persistence, security, privacy, licensing>
-Acceptance: <specific behavior and required evidence>
-Checks: <focused commands>; <regression commands>; <manual/host boundary>
-Result: <commands, counts, artifact details, and known limitations>
-Follow-up: <exact next step or smallest required decision>
-```
-
-Keep only the active and immediately previous step here. Git history retains completed execution notes.
-
-## Active milestone plan
-
-### P0.1 — lock the first-stage rules reference
-
-Status: planned
-
-Objective: produce a small, internally consistent data contract for the first six characters, their starting weapons, XP curve, initial passives, and the Code Dungeon stage slice before replacing the generic combat runtime.
-
-Dependencies: documentation audit; [accepted divergences](decisions/accepted-divergences.md).
-
-Scope: local mapping research, a new versioned gameplay contract/fixtures, registry schemas, and tests. No renderer or broad content work.
-
-Risks: the existing mapping documents contain contradictions and unverified claims; copying protected code/assets is not permitted; changing XP/combat without migration is safe because run state is not persisted.
-
-Acceptance:
-
-- Every included number and behavior has one locked source and an explicit Token Guild name.
-- Battery and gold exceptions are visibly marked and do not alter other mechanics.
-- The contract distinguishes a weapon's eight real level effects rather than one base value plus a label.
-- Character passive boundaries, XP thresholds, inventory limits, enemy/drop data, and stage events have deterministic fixtures.
-- Registry validation rejects duplicate IDs, broken references, impossible levels, and unsupported mechanics.
-
-Checks: focused registry/fixture tests; `npm run typecheck`; `npm test`; source and license review.
-
-Result: not started.
-
-Follow-up: P0.2 data-driven weapon/projectile runtime.
+6. Update the manual only for verified user-facing behavior and record milestone evidence.
+7. Leave the next step unambiguous or mark the goal complete only when no required work remains.
 
 ## Quality gates
 
 ### Per-step gate
 
-- Focused unit tests pass.
-- Typecheck and lint pass for code changes.
-- No new untested branch at a trust, reward, collision, or persistence boundary.
-- Docs distinguish implemented behavior from future intent.
-- `git diff --check` passes and the diff contains no accidental generated or third-party files.
+- focused tests pass;
+- typecheck and lint pass;
+- no new untested trust, reward, collision, persistence, or IPC branch;
+- documentation distinguishes implemented behavior from future intent;
+- `git diff --check` passes and no accidental generated/third-party files are included.
 
 ### Milestone gate
 
-- `npm ci`
-- `npm run lint`
-- `npm run typecheck`
-- `npm test`
-- `npm run build`
-- `npm run test:e2e`
-- `npm run package`
-- packaged-content and dependency audit
-- recorded interactive playthrough for user-facing changes
-- update `CURRENT_MANUAL.md`, parity backlog, and changelog from verified behavior
+```text
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:e2e
+npm run package
+git diff --check
+```
 
-Tests must run without public network access, live tokens, secrets, or an external LLM.
+Tests must run without public-network dependency, live tokens, secrets, or an external LLM. A user-facing change also requires a narrow/wide-sidebar manual playthrough or an equivalent host/browser check; current repository smoke is activation-only, so record that limitation rather than claiming click coverage.
 
 ## Non-negotiable engineering constraints
 
 - Keep deterministic gameplay independent of DOM, VS Code, wall-clock timers, and network sources.
 - Runtime-validate telemetry, persistence, content registries, and every IPC boundary.
 - Preserve single-owner rewards and idempotent host persistence.
-- Keep exact and estimated telemetry distinct. Never claim heuristic counts are exact.
+- Keep exact and estimated telemetry distinct; never claim heuristic counts are exact.
 - Do not retain prompts, model output, raw workspace/terminal/trace content, credentials, or authorization headers.
-- Bind any future listener to loopback, opt in explicitly, bound its payload/queue, handle conflicts, and dispose it on deactivation.
+- Bind listeners to loopback, opt in explicitly, bound payload/queue/memory/work, handle conflicts, and dispose on deactivation.
 - Honor CSP, keyboard access, focus, VS Code theme tokens, and reduced motion.
-- Keep entity and queue counts bounded; formal performance targets are not required.
+- Keep entity, effect, and queue counts bounded. No performance target is required beyond bounded-resource stability.

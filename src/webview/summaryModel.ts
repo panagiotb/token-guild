@@ -16,6 +16,7 @@ export interface SummaryViewModel {
   readonly enemies: string;
   readonly goldBreakdown: string;
   readonly upgrades: readonly string[];
+  readonly treasureRewards: readonly string[];
   readonly damage: readonly SummaryDamageRow[];
   readonly announcement: string;
 }
@@ -36,6 +37,7 @@ export function buildSummaryViewModel(summary: RunSummary, guildGold: number): S
     enemies: `${summary.enemiesSpawned} / ${summary.enemiesDefeated}`,
     goldBreakdown: detailedGoldBreakdown,
     upgrades: summary.upgrades.length > 0 ? summary.upgrades : ['No upgrades selected'],
+    treasureRewards: summary.treasureRewards && summary.treasureRewards.length > 0 ? summary.treasureRewards : ['No treasure rewards'],
     damage,
     announcement: `${outcome}. ${summary.heroName}, level ${summary.level}. ${summary.tokens} tokens, ${summary.gold} gold, ${summary.enemiesSpawned} enemies spawned and ${summary.enemiesDefeated} defeated.`
   };

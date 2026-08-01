@@ -4,7 +4,8 @@ import type { IBatteryState, ITokenTelemetryBatch } from '../shared/battery';
 export type HeroId = 'warrior' | 'wizard' | 'rogue' | 'ranger' | 'paladin' | 'necromancer';
 export type RunPhase = 'dungeon' | 'level-up' | 'summary';
 export type RunOutcome = 'victory' | 'defeat';
-export type PickupKind = 'xp-shard' | 'xp-crystal' | 'xp-orb' | 'gold-chest' | 'gold-coin';
+export type PickupKind = 'xp-shard' | 'xp-crystal' | 'xp-orb' | 'token-core' | 'gold-chest' | 'gold-coin' | 'gold-sack' | 'gold-hoard' | 'mana-roast' | 'mana-magnet' | 'chrono-stasis' | 'arcane-cleanser';
+export type WeaponPattern = 'targeted' | 'fan' | 'ricochet' | 'aura' | 'bone';
 
 export interface CombatStats {
   hp: number;
@@ -18,6 +19,23 @@ export interface CombatStats {
   amount: number;
   magnet: number;
   growth: number;
+  duration?: number;
+  luck?: number;
+  greed?: number;
+  curse?: number;
+  recovery?: number;
+  revival?: number;
+}
+
+export interface WeaponLevelStats {
+  damage: number;
+  cooldown: number;
+  amount: number;
+  area: number;
+  speed: number;
+  duration: number;
+  pierce: number;
+  knockback: number;
 }
 
 export interface WeaponState {
@@ -26,9 +44,26 @@ export interface WeaponState {
   cooldownRemaining: number;
 }
 
+export interface ProjectileState {
+  id: number;
+  weaponId: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  damage: number;
+  area: number;
+  remainingPierce: number;
+  remainingSeconds: number;
+  knockback: number;
+  hitEnemyIds: number[];
+}
+
+export type EnemyKind = 'syntax_specter' | 'bug_bat' | 'memory_golem' | 'terminal_exit_boss' | 'deprecated_zombie' | 'unused_variable_phantom' | 'infinite_loop_fiend' | 'compiler_hydra' | 'timeout_reaper';
+
 export interface EnemyState {
   id: number;
-  kind: 'syntax_specter' | 'bug_bat' | 'memory_golem' | 'terminal_exit_boss';
+  kind: EnemyKind;
   x: number;
   y: number;
   hp: number;
@@ -37,6 +72,7 @@ export interface EnemyState {
   damage: number;
   isBoss: boolean;
   isElite: boolean;
+  frozenRemaining?: number;
 }
 
 export interface PickupState {
@@ -50,7 +86,7 @@ export interface PickupState {
 export interface UpgradeCard {
   id: string;
   label: string;
-  kind: 'weapon' | 'passive' | 'heal';
+  kind: 'weapon' | 'new-weapon' | 'passive' | 'new-passive' | 'heal';
   target: string;
 }
 
@@ -75,12 +111,15 @@ export interface RunSummary {
   enemiesDefeated: number;
   damageByWeapon: Readonly<Record<string, number>>;
   upgrades: readonly string[];
+  treasureRewards?: readonly string[];
 }
 
 export interface RunState {
   phase: RunPhase;
   outcome?: RunOutcome;
   heroId: HeroId;
+  stageId: string;
+  stageClockScale: number;
   seed: number;
   elapsedSeconds: number;
   level: number;
@@ -91,20 +130,28 @@ export interface RunState {
   tokenSource: TelemetrySource;
   tokenAccuracy: Accuracy;
   nextEntityId: number;
-  hero: { x: number; y: number; stats: CombatStats };
+  hero: { x: number; y: number; stats: CombatStats; baseStats: CombatStats; invulnerabilityRemaining: number };
   weapons: WeaponState[];
   passives: Record<string, number>;
   upgradeHistory: string[];
   enemies: EnemyState[];
+  projectiles: ProjectileState[];
   pickups: PickupState[];
   pendingCards: UpgradeCard[];
+  pendingLevelUps: number;
+  rerollsRemaining: number;
+  skipsRemaining: number;
+  banishesRemaining: number;
+  bannedUpgradeIds: string[];
   enemiesSpawned: number;
   enemiesDefeated: number;
   bossSpawned: boolean;
+  stageFinaleStarted: boolean;
+  waveSpawnCounts: Record<string, number>;
   bossRewardClaimed: boolean;
-  powerChargeReady: boolean;
-  hazardsTriggered: number;
   damageByWeapon: Record<string, number>;
+  treasureHistory: string[];
+  metaUpgrades: Record<string, number>;
   summary?: RunSummary;
   battery: IBatteryState;
   batteryCharging: boolean;
@@ -112,6 +159,8 @@ export interface RunState {
 }
 
 export interface TokenInput {
+  readonly source?: TelemetrySource;
+  readonly accuracy?: Accuracy;
   readonly count: number;
   readonly tokensPerSecond: number;
   readonly outputTokens?: number;

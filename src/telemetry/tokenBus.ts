@@ -1,7 +1,7 @@
 import { validateTokenStreamEvent } from '../shared/validation';
 import type { Accuracy, TelemetrySource, TokenStreamEvent } from '../shared/types';
 
-export type AgentStatus = 'idle' | 'thinking' | 'streaming' | 'berserk';
+export type AgentStatus = 'idle' | 'streaming';
 export type TokenEventSink = (event: TokenStreamEvent) => void;
 
 interface PendingEvent extends TokenStreamEvent { key: string }
@@ -9,10 +9,12 @@ interface PendingEvent extends TokenStreamEvent { key: string }
 export class TokenBus {
   private readonly pending: PendingEvent[] = [];
   private readonly seen = new Set<string>();
+  private readonly seenQueue: string[] = [];
   private lastEvent?: TokenStreamEvent;
 
-  public constructor(private readonly sink: TokenEventSink, private readonly windowMs = 250) {
+  public constructor(private readonly sink: TokenEventSink, private readonly windowMs = 250, private readonly maxSeenEvents = 4096) {
     if (!Number.isInteger(windowMs) || windowMs < 1) throw new Error('Token bus window must be a positive integer');
+    if (!Number.isInteger(maxSeenEvents) || maxSeenEvents < 1) throw new Error('Token bus dedupe limit must be a positive integer');
   }
 
   public ingest(raw: unknown): void {
@@ -20,6 +22,11 @@ export class TokenBus {
     const key = `${event.source}|${event.runId ?? ''}|${event.timestampMs}|${event.count}|${event.outputTokens ?? ''}|${event.inputTokens ?? ''}|${event.cacheTokens ?? ''}|${event.tokensPerSecond}|${event.isAgentActive ?? ''}`;
     if (this.seen.has(key)) return;
     this.seen.add(key);
+    this.seenQueue.push(key);
+    while (this.seenQueue.length > this.maxSeenEvents) {
+      const oldest = this.seenQueue.shift();
+      if (oldest) this.seen.delete(oldest);
+    }
     this.pending.push({ ...event, key });
     this.lastEvent = event;
   }
@@ -55,10 +62,7 @@ export class TokenBus {
 
   public statusAt(nowMs: number): AgentStatus {
     if (!this.lastEvent || nowMs - this.lastEvent.timestampMs > 5000) return 'idle';
-    if (this.lastEvent.tokensPerSecond >= 40) return 'berserk';
-    if (this.lastEvent.tokensPerSecond >= 1) return 'streaming';
-    if (nowMs - this.lastEvent.timestampMs >= 3000) return 'thinking';
-    return 'idle';
+    return this.lastEvent.tokensPerSecond > 0 ? 'streaming' : 'idle';
   }
 
   public getPendingCount(): number { return this.pending.length; }

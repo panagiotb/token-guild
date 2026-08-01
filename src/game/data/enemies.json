@@ -1,0 +1,11 @@
+[
+  { "id": "bug_bat", "name": "Bug Bat", "maxHp": 5, "speed": 48, "damage": 1, "xp": 1, "isElite": false, "isBoss": false },
+  { "id": "syntax_specter", "name": "Syntax Specter", "maxHp": 15, "speed": 32, "damage": 1, "xp": 1, "isElite": false, "isBoss": false },
+  { "id": "deprecated_zombie", "name": "Deprecated Zombie", "maxHp": 30, "speed": 20, "damage": 2, "xp": 2, "isElite": false, "isBoss": false },
+  { "id": "unused_variable_phantom", "name": "Unused Variable Phantom", "maxHp": 10, "speed": 28, "damage": 1, "xp": 2, "isElite": false, "isBoss": false },
+  { "id": "memory_golem", "name": "Memory Leak Golem", "maxHp": 100, "speed": 16, "damage": 3, "xp": 10, "isElite": true, "isBoss": false },
+  { "id": "infinite_loop_fiend", "name": "Infinite Loop Fiend", "maxHp": 150, "speed": 44, "damage": 4, "xp": 15, "isElite": true, "isBoss": false },
+  { "id": "compiler_hydra", "name": "Compiler Hydra", "maxHp": 1000, "speed": 28, "damage": 8, "xp": 25, "isElite": true, "isBoss": true },
+  { "id": "terminal_exit_boss", "name": "Terminal Exit Boss", "maxHp": 120, "speed": 8, "damage": 4, "xp": 20, "isElite": true, "isBoss": true },
+  { "id": "timeout_reaper", "name": "Timeout Reaper", "maxHp": 655350, "speed": 60, "damage": 9999, "xp": 0, "isElite": true, "isBoss": true }
+]

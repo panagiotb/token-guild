@@ -1,8 +1,8 @@
 # Token Guild
 
-Token Guild is a desktop VS Code extension that turns LLM token activity into a small survivor-style fantasy game. Version `0.1.0` is a deterministic Canvas/DOM vertical slice with a synthetic 100-token/second fixture, token battery, one Code Dungeon, six selectable heroes, persistent Guild gold/upgrades, and local run-summary export.
+Token Guild is a desktop VS Code extension that turns approved LLM token activity into a small survivor-style fantasy game. Version `0.1.0` is a deterministic Canvas/DOM vertical slice with a synthetic 100-token/second fixture, an opt-in loopback OTLP/HTTP JSON source, token battery, one 30-minute Code Dungeon, persistent progression, and local run-summary export.
 
-Real LLM telemetry is not connected yet. The current build needs no LLM, API key, token stream, or network access to play or test.
+The default build needs no LLM, API key, token stream, or network access to play or test. Real telemetry is opt-in through `tokenGuild.telemetry.otlpEnabled`; it accepts only bounded JSON traces from localhost and never stores raw traces or credentials.
 
 ## Documentation
 

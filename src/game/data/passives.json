@@ -1,6 +1,17 @@
 [
   { "id": "power_gauntlets", "name": "Power Gauntlets", "stat": "might", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "iron_armor", "name": "Iron Armor", "stat": "armor", "valuePerLevel": 1, "maxLevel": 5 },
+  { "id": "heart_of_vitality", "name": "Heart of Vitality", "stat": "maxHealth", "valuePerLevel": 0.2, "maxLevel": 5 },
+  { "id": "phoenix_amulet", "name": "Phoenix Amulet", "stat": "recovery", "valuePerLevel": 0.2, "maxLevel": 5 },
   { "id": "haste_amulet", "name": "Haste Amulet", "stat": "cooldown", "valuePerLevel": 0.08, "maxLevel": 5 },
   { "id": "orb_of_expansion", "name": "Orb of Expansion", "stat": "area", "valuePerLevel": 0.1, "maxLevel": 5 },
-  { "id": "token_magnetism", "name": "Token Magnetism", "stat": "magnet", "valuePerLevel": 0.33, "maxLevel": 5 }
+  { "id": "iron_bracer", "name": "Iron Bracer", "stat": "speed", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "spellbinder_scroll", "name": "Spellbinder Scroll", "stat": "duration", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "ring_of_duplication", "name": "Ring of Duplication", "stat": "amount", "valuePerLevel": 1, "maxLevel": 2 },
+  { "id": "token_magnetism", "name": "Token Magnetism", "stat": "magnet", "valuePerLevel": 0.33, "maxLevel": 5 },
+  { "id": "crown_of_wisdom", "name": "Crown of Wisdom", "stat": "growth", "valuePerLevel": 0.08, "maxLevel": 5 },
+  { "id": "stone_mask", "name": "Stone Mask", "stat": "greed", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "skull_of_doom", "name": "Skull of Doom", "stat": "curse", "valuePerLevel": 0.1, "maxLevel": 5 },
+  { "id": "tiragisu_ankh", "name": "Tiragisu Ankh", "stat": "revival", "valuePerLevel": 1, "maxLevel": 2 },
+  { "id": "pandoras_box", "name": "Pandora's Box", "stat": "allStats", "valuePerLevel": 0.04, "maxLevel": 9 }
 ]
