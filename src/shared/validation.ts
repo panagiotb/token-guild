@@ -23,6 +23,10 @@ export function validateTokenStreamEvent(value: unknown): TokenStreamEvent {
   if (value.count < 0 || value.tokensPerSecond < 0 || value.confidence < 0 || value.confidence > 1) {
     throw new Error('Token stream values are out of range');
   }
+  for (const field of ['outputTokens', 'inputTokens', 'cacheTokens'] as const) {
+    if (value[field] !== undefined && (!isFiniteNumber(value[field]) || value[field] < 0)) throw new Error('Token telemetry fields are out of range');
+  }
+  if (value.isAgentActive !== undefined && typeof value.isAgentActive !== 'boolean') throw new Error('Invalid agent activity flag');
   if (value.runId !== undefined && (typeof value.runId !== 'string' || value.runId.length > 128)) {
     throw new Error('Invalid token stream run ID');
   }
@@ -30,10 +34,10 @@ export function validateTokenStreamEvent(value: unknown): TokenStreamEvent {
 }
 
 export function validateProgress(value: unknown): PersistedProgress {
-  if (!isRecord(value) || value.schemaVersion !== PROGRESS_SCHEMA_VERSION || !isFiniteNumber(value.gold) || !isFiniteNumber(value.runCount) || !isFiniteNumber(value.totalTokens) || !Array.isArray(value.unlockedHeroes) || !Array.isArray(value.completedRunIds) || !isRecord(value.upgrades) || !isRecord(value.heroRecords) || !isRecord(value.settings)) {
+  if (!isRecord(value) || value.schemaVersion !== PROGRESS_SCHEMA_VERSION || !isFiniteNumber(value.gold) || !isFiniteNumber(value.runCount) || !isFiniteNumber(value.totalTokens) || !isFiniteNumber(value.batteryLevel) || !Array.isArray(value.unlockedHeroes) || !Array.isArray(value.completedRunIds) || !isRecord(value.upgrades) || !isRecord(value.heroRecords) || !isRecord(value.settings)) {
     throw new Error('Invalid persisted progress');
   }
-  if (value.gold < 0 || value.runCount < 0 || value.totalTokens < 0 || value.unlockedHeroes.some((hero) => typeof hero !== 'string' || !isSafeKey(hero, 64)) || value.completedRunIds.some((runId) => typeof runId !== 'string' || runId.length === 0 || runId.length > 128)) {
+  if (value.gold < 0 || value.runCount < 0 || value.totalTokens < 0 || !Number.isInteger(value.batteryLevel) || value.batteryLevel < 1 || value.batteryLevel > 5 || value.unlockedHeroes.some((hero) => typeof hero !== 'string' || !isSafeKey(hero, 64)) || value.completedRunIds.some((runId) => typeof runId !== 'string' || runId.length === 0 || runId.length > 128)) {
     throw new Error('Persisted progress contains invalid values');
   }
   for (const [upgradeId, rank] of Object.entries(value.upgrades)) {

@@ -23,6 +23,8 @@ export interface SummaryViewModel {
 export function buildSummaryViewModel(summary: RunSummary, guildGold: number): SummaryViewModel {
   const outcome = summary.outcome === 'victory' ? 'Victory' : 'Defeat';
   const damage = Object.entries(summary.damageByWeapon).map(([weapon, amount]) => ({ weapon, amount }));
+  const overflowGold = summary.goldBreakdown.overflow;
+  const detailedGoldBreakdown = summary.gold > 0 ? `Enemy gems +${summary.goldBreakdown.enemyKills} · Boss chest +${summary.goldBreakdown.bossChest} · Overflow +${overflowGold} · Run total ${summary.gold}` : 'No gold earned this run.';
   return {
     outcome,
     hero: `${summary.heroName} · Level ${summary.level}`,
@@ -32,7 +34,7 @@ export function buildSummaryViewModel(summary: RunSummary, guildGold: number): S
     gold: String(summary.gold),
     guildWallet: String(guildGold),
     enemies: `${summary.enemiesSpawned} / ${summary.enemiesDefeated}`,
-    goldBreakdown: summary.gold > 0 ? `Enemy gems +${summary.goldBreakdown.enemyKills} · Boss chest +${summary.goldBreakdown.bossChest} · Run total ${summary.gold}` : 'No gold earned this run.',
+    goldBreakdown: detailedGoldBreakdown,
     upgrades: summary.upgrades.length > 0 ? summary.upgrades : ['No upgrades selected'],
     damage,
     announcement: `${outcome}. ${summary.heroName}, level ${summary.level}. ${summary.tokens} tokens, ${summary.gold} gold, ${summary.enemiesSpawned} enemies spawned and ${summary.enemiesDefeated} defeated.`

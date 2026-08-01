@@ -11,5 +11,6 @@
 - Gold now follows visible pickup collection, upgrade cards keep stable DOM listeners between ticks, exports mirror the on-screen summary with run-specific filenames, and the responsive map HUD uses outside counters with instant enemy tooltips.
 - Level-up choices now appear over the map, the dungeon title shares one row with clock/tokens, and gem collection—not elapsed time—awards XP and ordinary gold.
 - Initial MVP: Guild and Code Dungeon run loop.
+- Added the MVP token battery: weighted output/input/cache charging, active/idle drain, overflow gold-coin pickups, 15% lockout re-ignition, persistent capacity upgrades, battery fill/charging UI, and schema-3 progress migration.
 - Six playable heroes, deterministic synthetic telemetry, level-up cards, boss victory/defeat, persistent Guild gold, pause/resume controls, synthesized SFX, and local summary-card export.
 - Real telemetry adapters remain experimental and opt-in; DLC and exhaustive mapping content are not included.

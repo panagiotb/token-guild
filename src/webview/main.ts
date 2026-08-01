@@ -1,5 +1,6 @@
 import './style.css';
 import { applyTokenInput, chooseUpgrade, createRun, tick } from '../game/simulation';
+import { BatteryEngine } from '../shared/battery';
 import { getXpRequiredForLevel } from '../game/math';
 import { TokenBus } from '../telemetry/tokenBus';
 import { AudioManager } from './audio';
@@ -7,6 +8,7 @@ import { downloadShareCard } from './shareCard';
 import { formatHeroOptionDescription, formatHeroOptionLabel } from './heroProgress';
 import { buildSummaryViewModel } from './summaryModel';
 import { formatPauseTitle } from './pause';
+import { batteryFillPercent, formatBatteryTooltip } from './batteryView';
 import type { HeroId, RunState, RunSummary } from '../game/types';
 import classes from '../game/data/classes.json';
 import type { HostToWebviewMessage, PersistedProgress } from '../shared/types';
@@ -34,7 +36,8 @@ const icons = {
   spawned: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>',
   defeated: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 6-6m-3-3 3 3m2-8 6 6m-3 3-3-3"/><path d="m4 20 4-1 9-9a2.8 2.8 0 0 0-4-4l-9 9-1 4Z"/></svg>',
   active: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>',
-  download: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>'
+  download: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>',
+  battery: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="16" height="12" rx="2"/><path d="M21 10v4"/><rect class="battery-liquid" x="5" y="8" width="12" height="8" rx="1"/><path class="battery-lightning" d="m13 7-4 6h3l-1 4 4-6h-3l1-4Z"/></svg>'
 } as const;
 const upgradeIcons: Record<string, string> = { 'weapon-upgrade': icons.weapon, 'power-gauntlets': icons.power, heal: icons.heal };
 const upgradeHints: Record<string, string> = { 'weapon-upgrade': 'More damage', 'power-gauntlets': '+10% Might', heal: 'Restore 25% HP' };
@@ -50,11 +53,11 @@ app.innerHTML = `
       <h2 id="guild-title">Guild Hall</h2><p>Choose a hero for the Code Dungeon.</p>
       <label for="hero-select">Hero</label><select id="hero-select"></select>
       <div class="guild-actions"><button class="primary-action" type="button" id="start-run">${icons.run}<span>Start dungeon run</span></button><button type="button" id="buy-might">Buy Guild Might · 100 gold</button></div>
-      <button class="info-link" type="button" id="might-info">What is Guild Might?</button><output id="guild-status" role="status">Ready.</output>
+      <button class="secondary-action" type="button" id="buy-battery">Upgrade token battery</button><button class="info-link" type="button" id="might-info">What is Guild Might?</button><output id="guild-status" role="status">Ready.</output>
       <dialog id="might-dialog" class="token-dialog"><form method="dialog"><h3>Guild Might</h3><p>Guild Might is a permanent between-run upgrade. Each rank costs 100 gold and adds 5% weapon damage to every future run.</p><ul><li>It persists when you return to the Guild or restart VS Code.</li><li>It affects weapon damage, not token counting or XP.</li><li>It is this MVP's simplified equivalent of a permanent meta-progression PowerUp.</li></ul><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="run-screen" class="screen hidden" aria-labelledby="run-title">
-      <div class="map-shell"><div class="map-toolbar" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><h2 id="run-title">Code Dungeon</h2><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div><div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas><div id="cards" class="cards map-upgrade-overlay hidden" aria-live="polite"></div></div></div>
+      <div class="map-shell"><div class="map-toolbar" aria-label="Dungeon counters"><span class="map-counter" id="clock-counter" title="Elapsed time"><span class="counter-icon">${icons.clock}</span><strong id="clock-hud">0s</strong></span><h2 id="run-title">Code Dungeon</h2><button class="map-counter icon-control" type="button" id="token-info" title="Explain synthetic token flow" aria-label="Explain synthetic token flow">${icons.tokens}<strong id="token-hud">0</strong></button></div><div class="battery-strip"><span class="battery-widget" id="battery-widget"><span class="battery-icon" aria-hidden="true">${icons.battery}</span><span class="battery-copy"><strong id="battery-label">Token battery</strong><small id="battery-state">Tokens Stored: 5K/5K</small></span></span><span id="battery-lockout" class="battery-lockout hidden" role="status">Battery depleted · run an active prompt to recharge to 15%.</span></div><div class="map-frame"><canvas id="game-canvas" width="320" height="200" aria-label="Token Guild dungeon map"></canvas><div id="cards" class="cards map-upgrade-overlay hidden" aria-live="polite"></div></div></div>
       <section class="character-panel" aria-labelledby="character-title">
         <div class="character-heading"><div class="character-portrait">${icons.hero}</div><div><h3 id="character-title">Character</h3><p id="character-role">Starting class</p></div><strong id="character-level">Lvl 1</strong></div>
         <div class="character-bars"><div class="bar-row"><span>HP</span><div id="hp-bar" class="stat-bar" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><output id="hp-value">100/100</output></div><div class="bar-row"><span>XP</span><div id="xp-bar" class="stat-bar xp" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><output id="xp-value">0 / 5</output></div></div>
@@ -62,7 +65,7 @@ app.innerHTML = `
       </section>
       <div class="run-meta" id="run-meta" aria-live="polite"><div class="enemy-counters" aria-label="Enemy counters"><span class="enemy-counter" id="enemy-spawned" tabindex="0"><span class="counter-icon">${icons.spawned}</span><strong id="enemy-spawned-count">0</strong></span><span class="enemy-counter" id="enemy-defeated" tabindex="0"><span class="counter-icon">${icons.defeated}</span><strong id="enemy-defeated-count">0</strong></span><span class="enemy-counter" id="enemy-active" tabindex="0"><span class="counter-icon">${icons.active}</span><strong id="enemy-active-count">0</strong></span></div><button class="gold-info" type="button" id="gold-info" title="Explain the gold ledger">${icons.gold}<span>Gold <strong id="gold-hud">0</strong></span></button></div>
       <p class="controls">Move with arrow keys or WASD. Synthetic tokens flow while the run is active.</p>
-      <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 3 synthetic tokens every 250 ms, displayed as 12 tokens per second.</p><ul><li>Tokens are counted for telemetry and combat throughput.</li><li>Collected gem pickups grant 1 XP and 1 gold in this first pass.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
+      <dialog id="token-dialog" class="token-dialog"><form method="dialog"><h3>Synthetic tokens</h3><p>This MVP uses a local deterministic fixture, not an LLM connection. While the run is active it emits 25 synthetic tokens every 250 ms, displayed as 100 tokens per second.</p><ul><li>Tokens are counted for telemetry and combat throughput.</li><li>Collected gem pickups grant 1 XP and 1 gold in this first pass.</li><li>The HUD labels this source <strong>synthetic / exact</strong>.</li><li>No prompt, response, API key, or external content is collected.</li></ul><p>Real telemetry adapters are future opt-in work and are not needed to play or test this build.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
       <dialog id="gold-dialog" class="token-dialog"><form method="dialog"><h3>Gold ledger</h3><p>Run gold is earned when the hero collects a map pickup and is added to the Guild wallet only once when the run reward is recorded.</p><ul><li>Enemy gem: +1 XP and +1 gold on collection.</li><li>Boss chest: +100 gold on collection. The yellow map marker remains pending until the hero reaches it.</li><li>Run gold and Guild wallet totals are shown separately on the result screen.</li></ul><p id="gold-breakdown-dialog">No gold earned yet.</p><button class="dialog-close" type="submit">Close</button></form></dialog>
     </section>
     <section id="summary-screen" class="screen hidden" aria-labelledby="summary-title">
@@ -82,6 +85,7 @@ app.innerHTML = `
 
 const heroSelect = document.querySelector<HTMLSelectElement>('#hero-select')!;
 const buyMightButton = document.querySelector<HTMLButtonElement>('#buy-might')!;
+const buyBatteryButton = document.querySelector<HTMLButtonElement>('#buy-battery')!;
 const guildScreen = document.querySelector<HTMLElement>('#guild-screen')!;
 const runScreen = document.querySelector<HTMLElement>('#run-screen')!;
 const summaryScreen = document.querySelector<HTMLElement>('#summary-screen')!;
@@ -96,7 +100,7 @@ if (!drawingContext) throw new Error('Canvas rendering is unavailable');
 const context: CanvasRenderingContext2D = drawingContext;
 
 function defaultProgress(): PersistedProgress {
-  return { schemaVersion: 2, gold: 0, unlockedHeroes: [...heroes], upgrades: {}, heroRecords: Object.fromEntries(heroes.map((hero) => [hero, { highestLevel: 1 }])), runCount: 0, totalTokens: 0, completedRunIds: [], settings: { muted: false, volume: 0.08 } };
+  return { schemaVersion: 3, gold: 0, unlockedHeroes: [...heroes], upgrades: {}, heroRecords: Object.fromEntries(heroes.map((hero) => [hero, { highestLevel: 1 }])), runCount: 0, totalTokens: 0, batteryLevel: 1, completedRunIds: [], settings: { muted: false, volume: 0.08 } };
 }
 
 let progress: PersistedProgress = defaultProgress();
@@ -176,6 +180,10 @@ function renderGuildStatus(): void {
   const status = document.querySelector<HTMLOutputElement>('#guild-status');
   if (status) status.value = `Gold ${progress.gold} · Runs ${progress.runCount} · Tokens ${progress.totalTokens} · Might rank ${progress.upgrades.might ?? 0}`;
   buyMightButton.disabled = progress.gold < 100;
+  const nextBatteryLevel = progress.batteryLevel + 1;
+  const batteryCost = BatteryEngine.upgradeCost(nextBatteryLevel);
+  buyBatteryButton.disabled = nextBatteryLevel > BatteryEngine.MAX_LEVEL || progress.gold < batteryCost;
+  buyBatteryButton.textContent = nextBatteryLevel > BatteryEngine.MAX_LEVEL ? 'Token battery maxed' : `Upgrade token battery · ${batteryCost} gold`;
   renderHeroOptions();
 }
 
@@ -186,7 +194,7 @@ function renderWorld(): void {
   const screenX = (x: number) => canvas.width / 2 + x;
   const screenY = (y: number) => canvas.height / 2 + y;
   for (const pickup of run.pickups) {
-    const isGold = pickup.kind === 'gold-chest';
+    const isGold = pickup.kind === 'gold-chest' || pickup.kind === 'gold-coin';
     const size = isGold ? 6 : 4;
     context.fillStyle = isGold ? '#f0c94b' : '#70c8ff';
     context.fillRect(screenX(pickup.x) - size / 2, screenY(pickup.y) - size / 2, size, size);
@@ -251,6 +259,23 @@ function renderRun(): void {
   renderCharacter();
   setText('clock-hud', `${Math.floor(run.elapsedSeconds)}s`);
   setText('token-hud', String(run.totalTokens));
+  const batteryWidget = document.querySelector<HTMLElement>('#battery-widget');
+  const batteryState = document.querySelector<HTMLElement>('#battery-state');
+  const batteryTooltip = formatBatteryTooltip(run.battery.currentCapacity, run.battery.maxCapacity);
+  const batteryStatus = run.battery.isLockedOut ? 'Locked out' : run.batteryCharging ? 'Charging' : 'Draining';
+  if (batteryWidget) {
+    batteryWidget.classList.toggle('charging', run.batteryCharging);
+    batteryWidget.classList.toggle('locked', run.battery.isLockedOut);
+    batteryWidget.title = `${batteryTooltip} · Level ${run.battery.level} · ${batteryStatus}`;
+    batteryWidget.setAttribute('aria-label', `${batteryTooltip}. Level ${run.battery.level}. ${batteryStatus}.`);
+    batteryWidget.style.setProperty('--battery-fill', String(batteryFillPercent(run.battery.currentCapacity, run.battery.maxCapacity) / 100));
+  }
+  if (batteryState) batteryState.textContent = batteryTooltip;
+  const lockout = document.querySelector<HTMLElement>('#battery-lockout');
+  if (lockout) {
+    lockout.classList.toggle('hidden', !run.battery.isLockedOut);
+    lockout.textContent = `Battery depleted · recharge to ${Math.ceil(run.battery.maxCapacity * 0.15)} tokens before the run resumes.`;
+  }
   const clockCounter = document.querySelector<HTMLElement>('#clock-counter');
   if (clockCounter) { clockCounter.title = `Elapsed time: ${Math.floor(run.elapsedSeconds)} seconds`; clockCounter.setAttribute('aria-label', `Elapsed time: ${Math.floor(run.elapsedSeconds)} seconds`); }
   const tokenInfo = document.querySelector<HTMLButtonElement>('#token-info');
@@ -259,9 +284,9 @@ function renderRun(): void {
   setCounter('enemy-defeated', run.enemiesDefeated, 'Enemies defeated');
   setCounter('enemy-active', run.enemies.length, 'Enemies currently active');
   setText('gold-hud', String(run.gold));
-  setText('gold-breakdown-dialog', `Current run: ${run.gold} gold · Enemy gems ${run.goldBreakdown.enemyKills} · Boss chest ${run.goldBreakdown.bossChest}`);
   const goldInfo = document.querySelector<HTMLButtonElement>('#gold-info');
-  if (goldInfo) goldInfo.title = `Gold ${run.gold}: enemy gems ${run.goldBreakdown.enemyKills}, boss chest ${run.goldBreakdown.bossChest}`;
+  setText('gold-breakdown-dialog', `Current run: ${run.gold} gold · Enemy gems ${run.goldBreakdown.enemyKills} · Boss chest ${run.goldBreakdown.bossChest} · Overflow coins ${run.goldBreakdown.overflow}`);
+  if (goldInfo) goldInfo.title = `Gold ${run.gold}: enemy gems ${run.goldBreakdown.enemyKills}, boss chest ${run.goldBreakdown.bossChest}, overflow coins ${run.goldBreakdown.overflow}`;
   if (run.phase !== previousPhase) {
     if (run.phase === 'level-up') audioManager.playTone(660, 140);
     if (run.phase === 'summary') audioManager.playTone(run.outcome === 'victory' ? 880 : 180, 240);
@@ -322,7 +347,7 @@ function finishRun(): void {
 }
 
 function startRun(): void {
-  run = createRun(heroSelect.value as HeroId, 0xdecafbad, progress.upgrades);
+  run = createRun(heroSelect.value as HeroId, 0xdecafbad, { ...progress.upgrades, batteryLevel: progress.batteryLevel });
   activeRunId = `demo-${Date.now()}-${progress.runCount}`;
   previousPhase = 'guild';
   setPaused(false);
@@ -333,16 +358,18 @@ function startRun(): void {
   loop = window.setInterval(() => {
     if (paused) { renderPauseScreen(); return; }
     if (!run || run.phase !== 'dungeon') { renderRun(); return; }
-    const direction = { x: 0, y: 0 };
-    if (keys.has('arrowleft') || keys.has('a')) direction.x -= 1;
-    if (keys.has('arrowright') || keys.has('d')) direction.x += 1;
-    if (keys.has('arrowup') || keys.has('w')) direction.y -= 1;
-    if (keys.has('arrowdown') || keys.has('s')) direction.y += 1;
-    const length = Math.hypot(direction.x, direction.y) || 1;
-    run.hero.x += (direction.x / length) * run.hero.stats.moveSpeed * 0.25;
-    run.hero.y += (direction.y / length) * run.hero.stats.moveSpeed * 0.25;
-    tokenBus?.ingest({ source: 'synthetic', accuracy: 'exact', timestampMs: Math.round((run.elapsedSeconds + 0.25) * 1000), count: 3, tokensPerSecond: 12, confidence: 1, runId: activeRunId });
+    tokenBus?.ingest({ source: 'synthetic', accuracy: 'exact', timestampMs: Math.round((run.elapsedSeconds + 0.25) * 1000), count: 25, outputTokens: 25, inputTokens: 0, cacheTokens: 0, isAgentActive: true, tokensPerSecond: 100, confidence: 1, runId: activeRunId });
     tokenBus?.flush(Math.round((run.elapsedSeconds + 0.25) * 1000));
+    if (!run.battery.isLockedOut) {
+      const direction = { x: 0, y: 0 };
+      if (keys.has('arrowleft') || keys.has('a')) direction.x -= 1;
+      if (keys.has('arrowright') || keys.has('d')) direction.x += 1;
+      if (keys.has('arrowup') || keys.has('w')) direction.y -= 1;
+      if (keys.has('arrowdown') || keys.has('s')) direction.y += 1;
+      const length = Math.hypot(direction.x, direction.y) || 1;
+      run.hero.x += (direction.x / length) * run.hero.stats.moveSpeed * 0.25;
+      run.hero.y += (direction.y / length) * run.hero.stats.moveSpeed * 0.25;
+    }
     tick(run, 0.25, 12);
     renderRun();
     if (run.summary) finishRun();
@@ -356,6 +383,14 @@ buyMightButton.innerHTML = `${icons.might}<span>Guild Might</span><small>100 gol
 document.querySelector<HTMLButtonElement>('#buy-might')!.addEventListener('click', () => {
   if (progress.gold < 100) return;
   progress = { ...progress, gold: progress.gold - 100, upgrades: { ...progress.upgrades, might: (progress.upgrades.might ?? 0) + 1 } };
+  renderGuildStatus();
+  vscodeApi?.postMessage({ version: 1, type: 'SAVE_PROGRESS', payload: progress });
+});
+buyBatteryButton.addEventListener('click', () => {
+  const nextLevel = progress.batteryLevel + 1;
+  const cost = BatteryEngine.upgradeCost(nextLevel);
+  if (nextLevel > BatteryEngine.MAX_LEVEL || progress.gold < cost) return;
+  progress = { ...progress, gold: progress.gold - cost, batteryLevel: nextLevel };
   renderGuildStatus();
   vscodeApi?.postMessage({ version: 1, type: 'SAVE_PROGRESS', payload: progress });
 });

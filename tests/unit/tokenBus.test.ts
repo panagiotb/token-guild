@@ -21,6 +21,15 @@ describe('TokenBus', () => {
     expect(output[0]).toMatchObject({ count: 5 });
   });
 
+  it('aggregates weighted telemetry fields and active state', () => {
+    const output: unknown[] = [];
+    const bus = new TokenBus((value) => output.push(value));
+    bus.ingest({ ...event(100, 2), inputTokens: 10, cacheTokens: 100, isAgentActive: true });
+    bus.ingest({ ...event(200, 3), inputTokens: 20, cacheTokens: 200, isAgentActive: false });
+    bus.flush(249);
+    expect(output[0]).toMatchObject({ count: 5, inputTokens: 30, cacheTokens: 300, isAgentActive: true });
+  });
+
   it('classifies idle, streaming, berserk, and thinking states', () => {
     const bus = new TokenBus(() => undefined);
     bus.ingest(event(100, 1, 10)); expect(bus.statusAt(100)).toBe('streaming');

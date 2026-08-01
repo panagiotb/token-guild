@@ -60,6 +60,7 @@ export const DEFAULT_PROGRESS: PersistedProgress = {
   heroRecords: defaultHeroRecords(),
   runCount: 0,
   totalTokens: 0,
+  batteryLevel: 1,
   completedRunIds: [],
   settings: { muted: false, volume: 0.08 }
 };
@@ -81,6 +82,7 @@ export function migrateProgress(raw: unknown): PersistedProgress {
     heroRecords: safeHeroRecords(raw.heroRecords, unlockedHeroes),
     runCount: nonNegativeNumber(raw.runCount, DEFAULT_PROGRESS.runCount),
     totalTokens: nonNegativeNumber(raw.totalTokens, DEFAULT_PROGRESS.totalTokens),
+    batteryLevel: typeof raw.batteryLevel === 'number' && Number.isInteger(raw.batteryLevel) && raw.batteryLevel >= 1 && raw.batteryLevel <= 5 ? raw.batteryLevel : DEFAULT_PROGRESS.batteryLevel,
     completedRunIds,
     settings: safeSettings(raw.settings)
   };

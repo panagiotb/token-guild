@@ -18,6 +18,8 @@
     "forkSupport": "best-effort-smoke-test",
     "includeDlc": false,
     "includeFullMapping": false,
+    "gameplayBaseline": "vampire-survivors-base-game",
+    "acceptedDivergences": ["token-battery", "gold-acquisition"],
     "releaseArtifact": "local-vsix"
   },
   "telemetry": {
@@ -29,7 +31,7 @@
   },
   "resources": {
     "allowOnlineDependencyAndResourceDownloads": true,
-    "approval": "request-command-level-escalation-when-required",
+    "onlineResearchAndProjectDownloads": "preapproved",
     "externalPublication": false
   },
   "assets": {
@@ -43,7 +45,9 @@
       "clean-build",
       "resource-teardown",
       "bounded-queues-and-entity-counts",
-      "security-and-privacy-checks"
+      "security-and-privacy-checks",
+      "real-boundary-test-or-recorded-manual-check",
+      "source-verified-current-documentation"
     ]
   }
 }

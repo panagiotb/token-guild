@@ -1,4 +1,5 @@
 import { calculateBerserkSpeed, calculateCooldown, calculateDamage, distance, getXpRequiredForLevel } from './math';
+import { BatteryEngine } from '../shared/battery';
 import type { CombatStats, HeroId, PickupState, RunState, TokenInput, UpgradeCard } from './types';
 
 const BOSS_TIME_SECONDS = 30;
@@ -75,7 +76,7 @@ function grantXp(state: RunState, amount: number): void {
   }
 }
 
-function awardGold(state: RunState, source: 'enemyKills' | 'bossChest', amount: number): void {
+function awardGold(state: RunState, source: 'enemyKills' | 'bossChest' | 'overflow', amount: number): void {
   if (amount <= 0) return;
   state.gold += amount;
   state.goldBreakdown[source] += amount;
@@ -117,12 +118,22 @@ export function createRun(heroId: HeroId, seed = 1, metaUpgrades: Readonly<Recor
   if (!config) throw new Error(`Unknown hero: ${heroId}`);
   const stats = cloneStats(config.stats);
   stats.might += (metaUpgrades.might ?? 0) * 0.05;
-  return { phase: 'dungeon', heroId, seed: seed >>> 0, elapsedSeconds: 0, level: 1, xp: 0, totalTokens: 0, gold: 0, goldBreakdown: { enemyKills: 0, bossChest: 0 }, tokenSource: 'synthetic', tokenAccuracy: 'exact', nextEntityId: 1, hero: { x: 0, y: 0, stats }, weapons: [{ id: config.weapon, level: 1, cooldownRemaining: 0 }], passives: {}, upgradeHistory: [], enemies: [], pickups: [], pendingCards: [], enemiesSpawned: 0, enemiesDefeated: 0, bossSpawned: false, bossRewardClaimed: false, powerChargeReady: false, hazardsTriggered: 0, damageByWeapon: {} };
+  const batteryLevel = metaUpgrades.batteryLevel ?? 1;
+  return { phase: 'dungeon', heroId, seed: seed >>> 0, elapsedSeconds: 0, level: 1, xp: 0, totalTokens: 0, gold: 0, goldBreakdown: { enemyKills: 0, bossChest: 0, overflow: 0 }, tokenSource: 'synthetic', tokenAccuracy: 'exact', nextEntityId: 1, hero: { x: 0, y: 0, stats }, weapons: [{ id: config.weapon, level: 1, cooldownRemaining: 0 }], passives: {}, upgradeHistory: [], enemies: [], pickups: [], pendingCards: [], enemiesSpawned: 0, enemiesDefeated: 0, bossSpawned: false, bossRewardClaimed: false, powerChargeReady: false, hazardsTriggered: 0, damageByWeapon: {}, battery: BatteryEngine.createState(batteryLevel), batteryCharging: false, pendingTelemetry: { outputTokens: 0, inputTokens: 0, cacheTokens: 0, isAgentActive: false } };
 }
 
 export function applyTokenInput(state: RunState, input: TokenInput): RunState {
   if (state.phase !== 'dungeon' || !Number.isFinite(input.count) || input.count < 0) return state;
-  state.totalTokens += input.count;
+  const outputTokens = Number.isFinite(input.outputTokens ?? input.count) ? Math.max(0, input.outputTokens ?? input.count) : 0;
+  const inputTokens = Number.isFinite(input.inputTokens ?? 0) ? Math.max(0, input.inputTokens ?? 0) : 0;
+  const cacheTokens = Number.isFinite(input.cacheTokens ?? 0) ? Math.max(0, input.cacheTokens ?? 0) : 0;
+  state.totalTokens += outputTokens;
+  state.pendingTelemetry = {
+    outputTokens: state.pendingTelemetry.outputTokens + outputTokens,
+    inputTokens: state.pendingTelemetry.inputTokens + inputTokens,
+    cacheTokens: state.pendingTelemetry.cacheTokens + cacheTokens,
+    isAgentActive: state.pendingTelemetry.isAgentActive || input.isAgentActive === true || input.tokensPerSecond > 0
+  };
   return state;
 }
 
@@ -152,6 +163,18 @@ export function chooseUpgrade(state: RunState, cardId: string): RunState {
 export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0): RunState {
   if (state.phase !== 'dungeon' || !Number.isFinite(deltaSeconds) || deltaSeconds <= 0) return state;
   const delta = Math.min(deltaSeconds, 0.25);
+  const telemetry = state.pendingTelemetry;
+  state.pendingTelemetry = { outputTokens: 0, inputTokens: 0, cacheTokens: 0, isAgentActive: false };
+  const batteryResult = BatteryEngine.processTick(delta, state.battery, telemetry.isAgentActive || tokensPerSecond > 0, BatteryEngine.calculateChargedTokens(telemetry));
+  state.battery = batteryResult.newState;
+  state.batteryCharging = batteryResult.isCharging;
+  const freshOverflowIds = new Set<number>();
+  if (batteryResult.goldSpawned > 0) {
+    const id = state.nextEntityId++;
+    freshOverflowIds.add(id);
+    state.pickups.push({ id, kind: 'gold-coin', x: state.hero.x, y: state.hero.y, value: batteryResult.goldSpawned });
+  }
+  if (state.battery.isLockedOut) return state;
   state.elapsedSeconds += delta;
   if (!state.bossSpawned && state.elapsedSeconds >= BOSS_TIME_SECONDS) {
     addEnemy(state, true);
@@ -201,12 +224,15 @@ export function tick(state: RunState, deltaSeconds: number, tokensPerSecond = 0)
   state.enemies = state.enemies.filter((enemy) => enemy.hp > 0);
   const collected: PickupState[] = [];
   for (const pickup of state.pickups) {
+    if (freshOverflowIds.has(pickup.id)) continue;
     if (distance(pickup, state.hero) <= state.hero.stats.magnet) {
       if (pickup.kind === 'gold-chest') {
         if (!state.bossRewardClaimed) {
           state.bossRewardClaimed = true;
           awardGold(state, 'bossChest', pickup.value);
         }
+      } else if (pickup.kind === 'gold-coin') {
+        awardGold(state, 'overflow', pickup.value);
       } else {
         // An XP shard is the MVP's gem pickup: collection awards both XP and gold.
         grantXp(state, pickup.value);

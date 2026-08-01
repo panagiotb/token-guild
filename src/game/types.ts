@@ -1,9 +1,10 @@
-import type { Accuracy, TelemetrySource, TokenStreamEvent } from '../shared/types';
+import type { Accuracy, TelemetrySource } from '../shared/types';
+import type { IBatteryState, ITokenTelemetryBatch } from '../shared/battery';
 
 export type HeroId = 'warrior' | 'wizard' | 'rogue' | 'ranger' | 'paladin' | 'necromancer';
 export type RunPhase = 'dungeon' | 'level-up' | 'summary';
 export type RunOutcome = 'victory' | 'defeat';
-export type PickupKind = 'xp-shard' | 'xp-crystal' | 'xp-orb' | 'gold-chest';
+export type PickupKind = 'xp-shard' | 'xp-crystal' | 'xp-orb' | 'gold-chest' | 'gold-coin';
 
 export interface CombatStats {
   hp: number;
@@ -56,6 +57,7 @@ export interface UpgradeCard {
 export interface GoldBreakdown {
   readonly enemyKills: number;
   readonly bossChest: number;
+  readonly overflow: number;
 }
 
 export interface RunSummary {
@@ -85,7 +87,7 @@ export interface RunState {
   xp: number;
   totalTokens: number;
   gold: number;
-  goldBreakdown: { enemyKills: number; bossChest: number };
+  goldBreakdown: { enemyKills: number; bossChest: number; overflow: number };
   tokenSource: TelemetrySource;
   tokenAccuracy: Accuracy;
   nextEntityId: number;
@@ -104,6 +106,16 @@ export interface RunState {
   hazardsTriggered: number;
   damageByWeapon: Record<string, number>;
   summary?: RunSummary;
+  battery: IBatteryState;
+  batteryCharging: boolean;
+  pendingTelemetry: ITokenTelemetryBatch;
 }
 
-export type TokenInput = Pick<TokenStreamEvent, 'count' | 'tokensPerSecond'>;
+export interface TokenInput {
+  readonly count: number;
+  readonly tokensPerSecond: number;
+  readonly outputTokens?: number;
+  readonly inputTokens?: number;
+  readonly cacheTokens?: number;
+  readonly isAgentActive?: boolean;
+}

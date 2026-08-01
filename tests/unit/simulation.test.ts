@@ -49,7 +49,7 @@ describe('deterministic run simulation', () => {
     tick(run, 0.25, 0);
     expect(run.phase).toBe('summary');
     expect(run.gold).toBe(100);
-    expect(run.goldBreakdown).toEqual({ enemyKills: 0, bossChest: 100 });
+    expect(run.goldBreakdown).toEqual({ enemyKills: 0, bossChest: 100, overflow: 0 });
     expect(run.pickups).toEqual([]);
     expect(run.summary?.gold).toBe(100);
   });
@@ -87,9 +87,42 @@ describe('deterministic run simulation', () => {
     expect(pending.pickups).toEqual([expect.objectContaining({ kind: 'xp-shard', value: 1 })]);
   });
 
+  it('spawns overflow gold at the hero and credits it only on collection', () => {
+    const run = createRun('warrior', 27);
+    applyTokenInput(run, { count: 10000, outputTokens: 10000, tokensPerSecond: 10, isAgentActive: true });
+    tick(run, 0.25, 10);
+    const coin = run.pickups.find((pickup) => pickup.kind === 'gold-coin');
+    expect(coin).toBeDefined();
+    expect(run.gold).toBe(0);
+    expect(coin?.value).toBeGreaterThan(0);
+    tick(run, 0.25, 10);
+    expect(run.gold).toBe(coin?.value);
+    expect(run.goldBreakdown.overflow).toBe(coin?.value);
+  });
+
+  it('freezes the run while depleted and re-ignites after incoming charge', () => {
+    const run = createRun('warrior', 28);
+    run.battery = { ...run.battery, currentCapacity: 1 };
+    tick(run, 0.25, 0);
+    expect(run.battery.isLockedOut).toBe(true);
+    const elapsed = run.elapsedSeconds;
+    tick(run, 0.25, 0);
+    expect(run.elapsedSeconds).toBe(elapsed);
+    applyTokenInput(run, { count: 800, tokensPerSecond: 10, isAgentActive: true });
+    tick(run, 0.25, 10);
+    expect(run.battery.isLockedOut).toBe(false);
+  });
+
   it('applies persistent Guild upgrades at run start', () => {
     const run = createRun('warrior', 1, { might: 2 });
     expect(run.hero.stats.might).toBeCloseTo(0.1);
+  });
+
+  it('starts with the persisted battery capacity level', () => {
+    const run = createRun('warrior', 2, { batteryLevel: 3 });
+    expect(run.battery.level).toBe(3);
+    expect(run.battery.maxCapacity).toBe(13284);
+    expect(run.battery.currentCapacity).toBe(13284);
   });
 
   it('starts every run at level one even when a hero has a higher recorded best', () => {
@@ -118,7 +151,7 @@ describe('deterministic run simulation', () => {
     expect(summary.tokenSource).toBe('synthetic');
     expect(summary.tokenAccuracy).toBe('exact');
     expect(summary.enemiesSpawned).toBe(run.enemiesSpawned);
-    expect(summary.gold).toBe(summary.goldBreakdown.enemyKills + summary.goldBreakdown.bossChest);
+    expect(summary.gold).toBe(summary.goldBreakdown.enemyKills + summary.goldBreakdown.bossChest + summary.goldBreakdown.overflow);
     expect(summary.goldBreakdown.bossChest).toBe(100);
     expect(run.pickups.filter((pickup) => pickup.kind === 'gold-chest')).toEqual([]);
   });

@@ -1,5 +1,5 @@
 export const PROTOCOL_VERSION = 1 as const;
-export const PROGRESS_SCHEMA_VERSION = 2 as const;
+export const PROGRESS_SCHEMA_VERSION = 3 as const;
 
 export type Accuracy = 'exact' | 'estimated';
 export type TelemetrySource = 'synthetic' | 'otlp' | 'proxy' | 'buffer';
@@ -15,6 +15,10 @@ export interface TokenStreamEvent {
   readonly count: number;
   readonly tokensPerSecond: number;
   readonly confidence: number;
+  readonly outputTokens?: number;
+  readonly inputTokens?: number;
+  readonly cacheTokens?: number;
+  readonly isAgentActive?: boolean;
   readonly runId?: string;
 }
 
@@ -26,6 +30,7 @@ export interface PersistedProgress {
   readonly heroRecords: Readonly<Record<string, HeroProgressRecord>>;
   readonly runCount: number;
   readonly totalTokens: number;
+  readonly batteryLevel: number;
   readonly completedRunIds: readonly string[];
   readonly settings: { readonly muted: boolean; readonly volume: number };
 }

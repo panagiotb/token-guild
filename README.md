@@ -1,16 +1,28 @@
 # Token Guild
 
-**Token Guild** is an IDE extension for VS Code, Cursor, Windsurf, and AI IDE forks that turns LLM wait times into a retro fantasy auto-battler rogue-lite.
+Token Guild is a desktop VS Code extension that turns LLM token activity into a small survivor-style fantasy game. Version `0.1.0` is a deterministic Canvas/DOM vertical slice with a synthetic 100-token/second fixture, token battery, one Code Dungeon, six selectable heroes, persistent Guild gold/upgrades, and local run-summary export.
 
----
+Real LLM telemetry is not connected yet. The current build needs no LLM, API key, token stream, or network access to play or test.
 
 ## Documentation
 
-* 📖 [Product Specification & Game Design](file:///d:/Evdaimon%20Games/Apps/Token%20Guild/.dev/README.md)
-* 🛠️ [Tech Stack & Architecture Specification](file:///d:/Evdaimon%20Games/Apps/Token%20Guild/.dev/TechStack.md)
-* ⚡ [Universal Multi-Layer Token Telemetry Engine Spec](file:///d:/Evdaimon%20Games/Apps/Token%20Guild/.dev/UniversalTelemetryEngine.md)
-* 🔍 [Token Master Prior Extension Reference](file:///d:/Evdaimon%20Games/Apps/Token%20Guild/.dev/TokenMasterReference.md)
+- [Development documentation index](.dev/README.md)
+- [Current functionality manual](.dev/CURRENT_MANUAL.md)
+- [Project management and unattended rules](.dev/PROJECT_MANAGEMENT.md)
+- [Vampire Survivors parity backlog](.dev/VAMPIRE_SURVIVORS_PARITY_TODO.md)
+- [Token battery specification](.dev/specifications/token-battery.md)
 
 ## Token-free smoke test
 
-The MVP is testable without an LLM, API key, or token stream. Run `npm ci`, then `npm run test:synthetic` for the deterministic simulation and synthetic telemetry tests (or `npm run test` for the full suite). To try it interactively, run the extension with `F5`, open the Token Guild activity-bar view, choose a hero, and select **Start dungeon run**. The run injects a labeled `synthetic / exact` fixture every 250 ms; no external telemetry is read. `npm run test:e2e` also verifies that the contributed Guild view is registered as a webview and can be opened in the Extension Development Host.
+```powershell
+npm ci
+npm run test:synthetic
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
+For an interactive run, press `F5` in VS Code, open Token Guild from the activity bar, select a hero, and choose **Start dungeon run**. Move with arrow keys or `WASD`; combat is automatic.
+
+`npm run test:e2e` verifies activation and opens the contributed Guild webview in an Extension Development Host. It does not automate webview clicks or visual layout, so user-facing changes still require a manual sidebar playthrough.

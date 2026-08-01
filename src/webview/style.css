@@ -9,9 +9,22 @@ body { margin: 0; background: var(--vscode-sideBar-background, #171717); color: 
 .hidden { display: none !important; }
 .pause-screen { min-height: 12rem; display: grid; place-items: center; text-align: center; }
 .pause-screen h1 { margin: 0; color: #e5a8b3; font-size: 1.15rem; line-height: 1.35; }
-.map-shell { width: 100%; max-width: 520px; margin: 0 auto; }
-.map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; margin-bottom: .35rem; }
+.map-shell { position: relative; width: 100%; max-width: 520px; margin: 0 auto; }
+.map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding-right: 2.1rem; box-sizing: border-box; margin-bottom: .35rem; }
 .map-toolbar h2 { flex: 1; min-width: 0; margin: 0; text-align: center; font-size: 1.1rem; white-space: nowrap; }
+.battery-strip { position: absolute; top: 0; right: 0; display: flex; align-items: center; gap: .5rem; min-height: 28px; }
+.battery-widget { --battery-fill: 1; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; color: #d9d0d5; border: 0; border-radius: 4px; background: transparent; cursor: help; }
+.battery-widget.charging { color: #f2c4cf; border-color: var(--guild-crimson-muted); }
+.battery-widget.locked { color: #e06c75; border-color: #8f3745; }
+.battery-icon { position: relative; display: inline-flex; width: 24px; height: 24px; }
+.battery-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.battery-icon .battery-liquid { fill: currentColor; stroke: none; transform: scaleX(var(--battery-fill)); transform-origin: left center; opacity: .7; }
+.battery-icon .battery-lightning { display: none; fill: #f0c94b; stroke: #f0c94b; }
+.battery-widget.charging .battery-lightning { display: block; }
+.battery-copy { display: none; }
+.battery-copy strong { font-size: .68rem; line-height: 1; }
+.battery-copy small { color: var(--vscode-descriptionForeground, #aaa); font-family: ui-monospace, monospace; font-size: .64rem; white-space: nowrap; }
+.battery-lockout { position: absolute; top: 1.8rem; right: 0; width: max-content; max-width: min(18rem, 80vw); color: #f0b4bd; font-size: .68rem; text-align: right; }
 .map-frame { position: relative; width: 100%; }
 canvas { display: block; width: 100%; max-width: none; height: auto; image-rendering: pixelated; border: 1px solid var(--vscode-panel-border, #444); }
 .map-counter { display: inline-flex; align-items: center; gap: .22rem; min-height: 24px; padding: .18rem .3rem; color: #e7e2ee; background: rgb(10 13 22 / 78%); border: 1px solid rgb(255 255 255 / 16%); border-radius: 4px; font-size: .68rem; font-family: ui-monospace, monospace; }

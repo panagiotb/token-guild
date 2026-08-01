@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Mapping Philosophy
 
-**Token Guild** is an IDE extension for VS Code, Cursor, and Windsurf that transforms streaming LLM telemetry into a retro 16-bit fantasy auto-battler rogue-lite.
+**Token Guild** is an IDE extension for VS Code, Cursor, and Windsurf that transforms normalized LLM telemetry into a retro fantasy auto-battler rogue-lite. The MVP uses a deterministic Canvas/DOM renderer and a battery-gated token economy.
 
 To guarantee proven gameplay depth and balanced progression, **Token Guild** implements a strict **1:1 mathematical and mechanical reskin** of *Vampire Survivors*. Every hero, weapon, passive accessory, pickup drop, power-up, damage formula, and stage event from *Vampire Survivors* is mapped to a corresponding retro fantasy RPG concept and bound directly to IDE code events (token streaming, prompt generation speed, agent thinking delays, syntax/linter errors, and terminal process exit codes).
 
@@ -22,7 +22,7 @@ To guarantee proven gameplay depth and balanced progression, **Token Guild** imp
 |                           Token Guild Engine Matrix                               |
 |                                                                                   |
 |  +-----------------------------------+     +-----------------------------------+  |
-|  |     IDE Host Telemetry Engine     |     |     Phaser 3 Webview Engine       |  |
+|  |     IDE Host Telemetry Engine     |     |     Canvas/DOM Webview            |  |
 |  | - Token Output Stream             | --> | - Player Auto-Combat & XP Level   |  |
 |  | - Tokens/Second Rate (t/s)        | --> | - Movement & Berserk Mode (1.5x)  |  |
 |  | - Agent Thinking Time (>=3s)      | --> | - Power Charge AOE Ultimate       |  |

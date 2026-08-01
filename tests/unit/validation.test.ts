@@ -6,6 +6,8 @@ describe('runtime validation', () => {
   it('accepts a valid token event and rejects unsafe counts', () => {
     expect(validateTokenStreamEvent({ source: 'synthetic', accuracy: 'exact', timestampMs: 1, count: 2, tokensPerSecond: 4, confidence: 1 })).toMatchObject({ count: 2 });
     expect(() => validateTokenStreamEvent({ source: 'synthetic', accuracy: 'exact', timestampMs: 1, count: -1, tokensPerSecond: 4, confidence: 1 })).toThrow();
+    expect(validateTokenStreamEvent({ source: 'synthetic', accuracy: 'exact', timestampMs: 1, count: 2, tokensPerSecond: 4, confidence: 1, inputTokens: 3, cacheTokens: 4, isAgentActive: true })).toMatchObject({ inputTokens: 3, cacheTokens: 4, isAgentActive: true });
+    expect(() => validateTokenStreamEvent({ source: 'synthetic', accuracy: 'exact', timestampMs: 1, count: 2, tokensPerSecond: 4, confidence: 1, inputTokens: -1 })).toThrow();
   });
 
   it('rejects unknown webview messages', () => {
@@ -41,10 +43,11 @@ describe('StateManager', () => {
     const storage = { get: <T>(key: string) => values.get(key) as T | undefined, update: async (key: string, value: unknown) => { values.set(key, value); } };
     const manager = new StateManager(storage);
     const migrated = await manager.load();
-    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.schemaVersion).toBe(3);
     expect(migrated.gold).toBe(125);
     expect(migrated.settings).toEqual({ muted: true, volume: 0.4 });
     expect(migrated.heroRecords.wizard).toEqual({ highestLevel: 1 });
+    expect(migrated.batteryLevel).toBe(1);
     expect(values.get('tokenGuild.progress')).toEqual(migrated);
   });
 
@@ -55,6 +58,11 @@ describe('StateManager', () => {
     expect(migrated.gold).toBe(80);
     expect(migrated.settings.volume).toBe(0.2);
     expect(migrated.heroRecords.wizard).toEqual({ highestLevel: 1 });
+  });
+
+  it('accepts and persists a bounded battery level', () => {
+    expect(() => validateWebviewMessage({ version: 1, type: 'SAVE_PROGRESS', payload: { ...DEFAULT_PROGRESS, batteryLevel: 5 } })).not.toThrow();
+    expect(() => validateWebviewMessage({ version: 1, type: 'SAVE_PROGRESS', payload: { ...DEFAULT_PROGRESS, batteryLevel: 6 } })).toThrow();
   });
 
   it('records the highest reached hero level once with an idempotent reward', async () => {

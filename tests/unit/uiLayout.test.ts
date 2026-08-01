@@ -1,8 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { formatHeroOptionDescription, formatHeroOptionLabel } from '../../src/webview/heroProgress';
+import { batteryFillPercent, formatBatteryTooltip } from '../../src/webview/batteryView';
 
 describe('responsive MVP layout', () => {
+  it('formats battery storage compactly for the accessible tooltip', () => {
+    expect(formatBatteryTooltip(24000, 100000)).toBe('Tokens Stored: 24K/100K');
+    expect(batteryFillPercent(250, 1000)).toBe(25);
+  });
+
   it('formats authoritative best-level hero labels without changing starting level semantics', () => {
     expect(formatHeroOptionLabel('Wizard', 4)).toBe('Wizard - Level 4');
     expect(formatHeroOptionDescription('Wizard', 4)).toContain('new runs start at Level 1');
@@ -29,6 +35,14 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('Choose upgrade below to continue:');
     expect(main).toContain('id="clock-counter"');
     expect(main).toContain('id="token-hud"');
+    expect(main).toContain('id="battery-widget"');
+    expect(main).toContain('battery-lightning');
+    expect(main).toContain('Tokens Stored:');
+    expect(main).toContain('id="battery-lockout"');
+    expect(main).toContain('batteryFillPercent');
+    expect(main).toContain('count: 25');
+    expect(main).toContain('tokensPerSecond: 100');
+    expect(main).toContain('class="battery-strip"');
     expect(main).toContain('id="enemy-spawned"');
     expect(main).toContain('id="enemy-defeated"');
     expect(main).toContain('id="enemy-active"');
