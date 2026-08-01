@@ -1,4 +1,6 @@
-# Stage Modifiers & Game Modes 1:1 Mapping Specification
+# Stage modifiers and modes: later-phase planning map
+
+> Planning status (2026-08-01): retained later-phase reference. Hyper, Hurry, Inverse, Endless, and Limit Break are outside the current MVP.
 
 ## 1. Overview
 

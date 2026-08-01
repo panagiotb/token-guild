@@ -1,4 +1,6 @@
-# Secret Weapons, Rings, Metaglios & Advanced Unions 1:1 Mapping Specification
+# Secret weapons and advanced unions: later-phase planning map
+
+> Planning status (2026-08-01): retained later-phase reference. Secret weapons and advanced unions are outside the current MVP and require fresh verification before use.
 
 ## 1. Overview
 

@@ -1,11 +1,13 @@
-# Passive Accessories & Guild Hall Meta-Powerups Exhaustive 1:1 Mapping Matrix
+# Passive accessories and Guild Hall PowerUps: planning map
+
+> Planning status (2026-08-01): retained reference, not a shipped contract. Several registered PowerUps are not yet reachable or behaviorally complete in production; verify against the current implementation.
 
 ## 1. Overview & Mechanics
 
 In **Token Guild**, passive items and power-up meta-upgrades provide permanent and per-run bonuses to player stats.
 
 * **In-Run Passive Accessories:** Found during dungeon runs via level-up selection (max 6 slots) or floor drops. They enhance combat metrics, boost hero survivability, and enable weapon evolutions.
-* **Guild Hall Meta-Powerups:** Purchased in the Webview Guild view using accumulated Gold earned from agent tasks. Powerups provide global permanent stat bonuses across all runs and can be refunded 100% without penalty.
+* **Guild Hall PowerUp proposals:** The state layer contains several bounded upgrade/refund foundations, but only Guild Might is currently exposed in the webview. Wider purchasing and refund behavior remains planned.
 
 ---
 

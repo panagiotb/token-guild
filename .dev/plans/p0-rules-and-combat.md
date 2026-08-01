@@ -7,11 +7,11 @@ Date: 2026-08-01
 
 Inputs reviewed:
 
-- `.dev/Vampire Survivors Mapping/01_CHARACTERS_AND_PASSIVES_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/02_WEAPONS_AND_EVOLUTIONS_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/03_PASSIVES_AND_POWERUPS_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/05_STAT_FORMULAS_AND_TELEMETRY_MATH.md`
-- `.dev/Vampire Survivors Mapping/14_JSON_DATA_REGISTRY.md`
+- `.dev/plans/Vampire Survivors Mapping/01_CHARACTERS_AND_PASSIVES_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/02_WEAPONS_AND_EVOLUTIONS_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/03_PASSIVES_AND_POWERUPS_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/05_STAT_FORMULAS_AND_TELEMETRY_MATH.md`
+- `.dev/plans/Vampire Survivors Mapping/14_JSON_DATA_REGISTRY.md`
 - current `src/game/data/*.json`, `src/game/simulation.ts`, and unit tests
 - Vampire Survivors references: [Level up](https://vampire-survivors.fandom.com/wiki/Level_up), [Growth](https://vampire-survivors.fandom.com/wiki/Growth), [Weapons](https://vampire-survivors.fandom.com/wiki/Weapons), and [Evolution](https://vampire-survivors.fandom.com/wiki/Evolution)
 

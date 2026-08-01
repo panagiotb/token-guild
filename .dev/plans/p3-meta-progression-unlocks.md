@@ -3,13 +3,15 @@
 Status: implemented and reviewed; acceptance gate passed.
 Date: 2026-08-01
 
+> Retrospective review (2026-08-01): PowerUp/refund and Reroll/Skip/Banish foundations passed their scoped state/simulation tests, but the production webview exposes only Guild Might and does not expose those level-up actions or refunds. Several registered stats are behaviorally incomplete. Production completion moved to [P6](NEXT_DEVELOPMENT.md).
+
 ## Research and cross-check
 
 Inputs:
 
-- `.dev/Vampire Survivors Mapping/03_PASSIVES_AND_POWERUPS_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/08_RELICS_AND_META_UNLOCKS_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/09_STAGE_MODIFIERS_AND_MODES_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/03_PASSIVES_AND_POWERUPS_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/08_RELICS_AND_META_UNLOCKS_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/09_STAGE_MODIFIERS_AND_MODES_MAPPING.md`
 - `.dev/VAMPIRE_SURVIVORS_PARITY_TODO.md`
 - current `src/extension/stateManager.ts`, `src/shared/validation.ts`, `src/webview/main.ts`, and tests
 - Vampire Survivors references: [Passive items](https://vampire-survivors.fandom.com/wiki/Passive_items), [Level up](https://vampire-survivors.fandom.com/wiki/Level_up), and [Stages](https://vampire-survivors.fandom.com/wiki/Stages)

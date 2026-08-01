@@ -1,4 +1,6 @@
-# Official DLC Expansions 1:1 Mapping Specification
+# DLC expansions: out-of-scope reference map
+
+> Planning status (2026-08-01): retained reference only. DLC is explicitly outside the Token Guild MVP and this document does not authorize implementation.
 
 ## 1. Overview
 

@@ -1,4 +1,6 @@
-# Relics & Meta-Progression Unlocks 1:1 Mapping Specification
+# Relics and meta unlocks: planning map
+
+> Planning status (2026-08-01): retained reference. Only minimal unlock/relic foundations exist; verify each gate and its production UI before promoting it to current functionality.
 
 ## 1. Overview & System Unlocks
 

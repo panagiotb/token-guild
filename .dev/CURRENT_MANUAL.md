@@ -31,10 +31,12 @@ npm run package
 
 New profiles start with Warrior and Code Dungeon. Hero records show the highest level reached, but each run starts at Level 1. Other heroes unlock deterministically through completed-run, wallet, or level conditions shown beside locked selector options. The Guild Hall contains:
 
-- bounded, costed, refundable PowerUps (including Guild Might and the base stat/action ranks);
+- bounded Guild Might ranks as the only visible base PowerUp purchase;
 - a separate non-refundable Token Guild battery upgrade;
 - wallet gold, run count, lifetime token total, hero records, unlocked stages, relic IDs, completed run IDs, and mute/volume settings;
 - the `Token Guild: Reset Progress` command with confirmation.
+
+The state layer defines additional base-stat/action PowerUps and a full-refund operation, but the production webview does not expose them. They are foundations for the next milestone, not current user-facing functionality.
 
 Run rewards are saved once per run ID. Duplicate reward messages do not duplicate wallet gold, run count, tokens, unlocks, or relics. Legacy progress is migrated into the current schema with safe defaults and validated before use.
 
@@ -65,13 +67,13 @@ Victory requires the final threat to be defeated and all required map rewards to
 
 ### XP, pickups, and treasure
 
-Enemies drop tiered XP gems. Gems remain on the map until collection; collecting an XP gem grants its value in XP and the currently approved +1 gold. Excess XP pickups condense into a bounded high-value orb without losing XP. Tactical map pickups include healing, magnet, freeze, screen clear, and gold variants; each applies only when collected.
+Enemies drop tiered XP gems. Gems remain on the map until collection; collecting an XP gem grants its value in XP and the currently approved matching gold value. Excess XP pickups condense into a bounded high-value orb without losing XP. Healing, magnet, freeze, screen-clear, and gold pickup effects exist in the simulation and tests, but the production stage does not yet spawn them; they are not currently obtainable in normal play.
 
-Boss/elite chest drops remain pending on the map. The first collected chest awards the approved gold reward and one deterministic eligible item upgrade or evolution. Duplicate chest collection cannot pay twice. The shipped weapon data includes the first five evolution recipes; the summary and PNG export disclose chest results.
+Boss/elite chest drops remain pending on the map. The first collected chest awards the approved gold reward and one deterministic eligible item upgrade or evolution. Reward ownership is currently global to the run, so later chests do not produce independent new results. Duplicate collection cannot pay twice. The shipped weapon data includes the first five evolution recipes; the summary and PNG export disclose chest results.
 
 ### Level-up actions
 
-The eligible pool supports existing/new weapon upgrades, existing/new passives, healing, and max-level exclusion. Bounded Reroll, Skip, and Banish actions are available only when their corresponding Guild ranks provide charges. They consume a charge and cannot grant XP or tokens.
+The eligible pool supports existing/new weapon upgrades, existing/new passives, healing, and max-level exclusion. Bounded Reroll, Skip, and Banish methods and charge rules exist in the simulation and unit tests, but no production level-up controls call them yet.
 
 ## Token telemetry and battery
 
@@ -101,4 +103,6 @@ The PNG export is generated locally from a separate 1200×960 canvas. It include
 
 ## Privacy, validation, and known limits
 
-Progress and IPC messages are runtime-validated. The webview uses a nonce-based CSP and local resource roots. No secrets are required for the default QA path. The MVP intentionally does not include DLC, additional stages, Arcanas/Darkanas, Endless/Inverse/Hurry/Hyper/Limit Break, Golden Eggs, merchant systems, bestiary, secret characters, external assets, or browser automation dependencies. Those items remain in [VAMPIRE_SURVIVORS_PARITY_TODO.md](VAMPIRE_SURVIVORS_PARITY_TODO.md).
+Progress and IPC messages are runtime shape-validated. The webview uses a nonce-based CSP and local resource roots. The current host still accepts complete progress snapshots and client-calculated run reward totals from the webview; moving those economy mutations behind narrow host-authoritative commands is a documented next-step security/integrity requirement. No secrets are required for the default QA path.
+
+Duration, Luck, Greed, Curse, and Revival are present in registry/progression state but do not yet have complete gameplay behavior, so they are not production-exposed purchases. The MVP intentionally does not include DLC, additional stages, Arcanas/Darkanas, Endless/Inverse/Hurry/Hyper/Limit Break, Golden Eggs, merchant systems, bestiary, secret characters, external assets, or browser automation dependencies. Current gaps remain in [VAMPIRE_SURVIVORS_PARITY_TODO.md](VAMPIRE_SURVIVORS_PARITY_TODO.md), with the ordered next pass in [NEXT_DEVELOPMENT.md](plans/NEXT_DEVELOPMENT.md).

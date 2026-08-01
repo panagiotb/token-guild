@@ -1,12 +1,14 @@
-# Character Class & Passive Ability Exhaustive 1:1 Mapping Matrix
+# Character classes and passives: planning map
+
+> Planning status (2026-08-01): retained reference, not a shipped contract. Verify identities, formulas, unlocks, and scope before implementation; current source code and tests are authoritative.
 
 ## 1. Character Mapping Philosophy
 
-Every playable character in *Vampire Survivors* (Base Roster, Secret Unlocks, and DLC Expansions) is mapped to a canonical 16-bit retro fantasy RPG class in **Token Guild**.
+The tables propose 16-bit fantasy reskins for base, secret, and DLC characters. Only the bounded current roster should inform near-term work; secret and DLC entries remain later/reference-only.
 
-* **Base Statistics:** Health, Armor, Movement Speed, Might (Damage), Cooldown, Area, Speed, Duration, Amount, Revival, Magnet, Luck, Growth, Greed, and Curse match *Vampire Survivors* default values 1:1.
-* **Passive Growth Scaling:** Per-level passive modifiers (e.g. Antonio's +10% Might per 10 levels) are preserved and bound to character experience accumulated via streaming tokens ($1\text{ output token} = 1\text{ XP}$).
-* **IDE Telemetry Synergies:** Each character class features a unique passive synergy with specific LLM coding streaming metrics.
+* **Base-stat candidates:** Health, Armor, Movement Speed, Might, Cooldown, Area, Speed, Duration, Amount, Revival, Magnet, Luck, Growth, Greed, and Curse values require current source verification; these tables do not establish exact parity.
+* **Passive growth proposals:** Per-level passive modifiers require verification and implementation tests. XP comes from collected gems, not streaming tokens.
+* **Legacy telemetry proposals:** The tables preserve early synergy ideas for historical context. They are not approved; character passives must remain independent of LLM telemetry under the current product decisions.
 
 ---
 

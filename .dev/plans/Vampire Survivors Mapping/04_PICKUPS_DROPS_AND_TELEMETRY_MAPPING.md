@@ -1,8 +1,10 @@
-# Pickups, Drops & IDE Telemetry Event Triggers 1:1 Mapping Matrix
+# Pickups and drops: planning map with rejected telemetry proposals
+
+> Planning status (2026-08-01): retained pickup/drop reference only. Direct telemetry-to-combat, spawn, reward, or stage-event bindings conflict with the accepted product decisions and must not be implemented without a new decision record.
 
 ## 1. Overview & Telemetry Integration Architecture
 
-In **Token Guild**, the game engine bridges real-time IDE events and LLM telemetry directly into *Vampire Survivors* item drops, experience gems, level-up chests, and tactical combat triggers.
+This file preserves candidate pickup/drop mappings and an early telemetry-trigger architecture. The direct telemetry triggers are historical rejected proposals: production telemetry may charge the battery and participate in the approved overflow-gold path, but it does not directly create XP, chests, tactical effects, enemies, or combat events.
 
 ```
 +-----------------------------------------------------------------------------------+

@@ -1,147 +1,80 @@
-# Vampire Survivors parity comparison and TODO
+# Vampire Survivors parity comparison and backlog
 
-This backlog compares the source-verified `0.1.0` behavior in [CURRENT_MANUAL.md](CURRENT_MANUAL.md) with the intended *base-game Vampire Survivors* experience represented by the local mapping documents. It does not include DLC. Mapping documents are design references, not proof that code exists, and their numbers must be verified before implementation.
+Reviewed against the production code and tests on 2026-08-01. This is a base-game comparison, not a DLC plan. The retained [mapping collection](plans/Vampire%20Survivors%20Mapping/00_OVERVIEW_AND_ARCHITECTURE.md) supplies candidate terminology and research leads; it is not proof that a mechanic is implemented or source-verified.
 
-## Product rule: accepted divergences
+## Accepted divergences
 
 Only these departures are currently approved:
 
-1. **Token battery gameplay:** LLM token telemetry charges an upgradable battery, active/idle drain gates the run, depletion locks play until 15% recharge, and full-battery overflow can create collectible gold.
-2. **Gold acquisition:** ordinary collected gems grant both XP and gold, the boss chest grants its defined gold on collection, and battery overflow coins grant gold on collection.
+1. **Token battery gameplay:** normalized token telemetry charges an upgradable battery; active/idle drain and recharge lockout gate the run.
+2. **Token Guild gold acquisition:** collected XP gems also grant the approved gold value, and collectible battery-overflow coins can grant gold.
 
-Everything else should move toward the base-game mechanical baseline unless a new decision record explicitly approves another divergence. In particular, token throughput should not silently replace XP, enemy, weapon, character, chest, or stage rules. It may power the accepted battery system.
+Telemetry must not otherwise control movement, damage, attack speed, XP, enemies, character passives, chests, bosses, victory, defeat, or the authored stage clock without a new decision record.
 
-## Current comparison
+## Current implementation comparison
 
-| System | Current Token Guild | Base-game target | Status |
+| System | Verified current state | Base-game direction | Assessment |
 | --- | --- | --- | --- |
-| Core loop | Move, auto-hit nearest enemy, collect gems, level, kill boss, summary | Movement-driven survival with weapon-specific automatic attacks, escalating waves, pickups, builds, chests, and end-stage threat | Partial foundation |
-| Run duration | 30-second boss smoke run | Authentic stage clock and wave cadence, normally a full-length base stage | Placeholder |
-| Characters | Six selectable names/loadouts; only starting stats apply | Correct base stats, starting weapons, per-level traits, unlock state, and character identity | Mostly missing |
-| Weapons | One direct-hit weapon; Level 2–8 changes label only | Weapon-specific patterns/projectiles/aura, complete level table, multiple equipped weapons | Missing |
-| Passives | Power Gauntlets only | Level-up passive pool, stat effects, slot limits, evolution requirements | Missing |
-| Level-up | Three fixed cards: weapon label level, Might, heal | Random eligible weapon/passive choices with correct exclusions and fallback items; reroll/skip/banish when unlocked | Placeholder |
-| XP | One gem type; custom quadratic threshold | Verified base-game gem values, Growth, threshold curve, multi-level resolution, and condensed-gem handling | Mostly missing |
-| Enemies | Three colored circles chosen randomly; one boss; fixed HP/speed | Stage-authored enemy families, waves, scaling, elites/minibosses, collision behavior, and final threat | Missing |
-| Damage model | Immediate nearest-target hit; continuous contact damage | Projectile/area collision, weapon cadence, invulnerability windows, knockback, pierce, duration, crit/luck where applicable | Missing |
-| Pickups | XP/gold gem, boss gold chest, overflow coin | XP gem tiers, floor/light-source pickups, magnets, healing, freezes, screen clears, and chest outcomes | Mostly missing |
-| Chests/evolutions | Boss chest awards only 100 gold; evolution registry unused | Chest item upgrades, multi-reward outcomes, max-weapon + passive evolution rules | Missing; gold payout remains approved |
-| Meta progression | Unlimited 100-gold Guild Might and five battery levels | Bounded PowerUp shop, costs/ranks, refund, character/stage/item unlock progression | Mostly missing; battery stays |
-| Content progression | All six heroes unlocked; one stage | Base character/stage unlock flow and collection support | Missing |
-| Modes/relics | None | Core relic-unlocked systems and base modes after the core game is stable | Deferred |
-| Audio/visual feedback | Synth tones and abstract Canvas shapes | Readable sprites, attack/effect feedback, pickup/chest/level/boss presentation, music/SFX event coverage | Placeholder |
-| Pause and UI | Header pause, map-overlay choices, character/HUD panels | Survivor-readable inventory, pause information, stage HUD, accessibility | Partial |
-| Gold | Gems +1, boss +100, battery overflow coin | Intentionally Token Guild-specific | Accepted divergence |
-| Token battery | Weighted telemetry, capacity upgrades, drain, overflow, lockout | No VS equivalent | Accepted divergence |
+| Core combat | Deterministic movement, auto-attacks, projectiles/areas, damage, knockback, contact damage, invulnerability | Preserve and deepen weapon-specific survivor combat | Working foundation |
+| Stage | One 30-minute authored Code Dungeon with waves, elites, final threat, victory/defeat | Authentic cadence and encounter handling | Working first slice |
+| Heroes | Six mapped heroes with starting weapons/stats and simple unlock records | Verified per-character traits, identity, and larger base roster | Partial |
+| Weapons/passives | Six weapon patterns/level tables, passive pool, bounded slots, five evolution recipes | Verified tables, complete behavior, broader base pool | Partial |
+| XP and gold | Collected XP gems grant XP plus approved Token Guild gold; overflow condenses | Retain approved divergence while matching collection ownership | Working divergence |
+| Tactical pickups | Healing/magnet/freeze/screen-clear/gold effects exist in the simulation | Authored light-source/drop path and target-consistent rules | Not production-reachable |
+| Chests | Boss/elite chest collection can grant one deterministic item/evolution and gold | Independent multi-chest ownership, reward multiplicity/luck | First chest only |
+| Meta progression | Persistent upgrade/unlock foundations; Guild Might and battery are exposed | Full supported PowerUp shop/refund and verified unlock flow | Partially exposed |
+| Level-up actions | Reroll/Skip/Banish methods and charge tests exist | Visible, usable, accessible action controls | Not production-reachable |
+| Stats | Core Might/Armor/Move/Cooldown/etc. paths exist | Every exposed stat must affect its intended mechanic | Duration/Luck/Greed/Curse/Revival incomplete |
+| Telemetry | Synthetic 100 tokens/second by default; opt-in bounded localhost OTLP JSON adapter | Keep orthogonal to gameplay outside battery/gold decision | Working divergence |
+| Presentation | Canvas silhouettes, feedback/audio, pause, summary, local PNG export | More readable production art/UI after mechanics are solid | MVP foundation |
+| Persistence/security | Validation, migration, duplicate run IDs, CSP, local resource roots | Host-authoritative economy and progression | Trust boundary incomplete |
+| QA | 73 unit tests plus build/package and activation smoke | Browser-level webview interactions and recorded manual matrix | Interaction gap |
 
-## Ordered implementation backlog
+## Ordered backlog
 
-The order is deliberate. Do not add broad content before the underlying weapon, item, collision, and progression systems are proven.
+### Next: P6 production-path completeness
 
-### P0 — mechanically honest first stage
+The detailed proposed plan is [NEXT_DEVELOPMENT.md](plans/NEXT_DEVELOPMENT.md). It deliberately finishes current foundations before content expansion:
 
-- [ ] Freeze a verified base-game rules reference for the first six mapped characters, their starting weapons, the first stage, XP thresholds, and the initial enemy/drop tables. Resolve discrepancies in the existing mapping documents before coding.
-- [ ] Replace the generic direct-hit attack with a data-driven weapon runtime supporting at least target selection, projectile or area entities, damage, cooldown, amount, speed, area, duration, pierce, knockback, and weapon-specific behavior.
-- [ ] Make every weapon Level 1–8 upgrade change real mechanics according to its locked table; reject or hide upgrades at max level.
-- [ ] Implement correct contact-damage cadence/invulnerability and knockback so overlapping enemies do not apply arbitrary 250 ms damage without a defined rule.
-- [ ] Apply each selected character's correct starting stats and level-triggered passive. Remove labels for stats that do nothing.
-- [ ] Replace the custom XP threshold with the locked base-game curve, support multiple queued level-ups, and apply Growth consistently.
-- [ ] Build a randomized eligible level-up pool with weapon/passive acquisition, real inventory slots, existing-item upgrades, max-level exclusion, and a tested fallback when no normal choice remains.
-- [ ] Keep token telemetry orthogonal to these rules: it charges the battery and may produce approved overflow gold, but does not grant XP or alter combat unless a new divergence is approved.
+1. add deterministic webview interaction tests;
+2. move persistent economy/progression mutations to narrow host-owned commands;
+3. expose the PowerUp/refund and Reroll/Skip/Banish flows;
+4. add production tactical-pickup drops and independent per-chest ownership;
+5. complete or hide every registered but inert stat;
+6. pass automated and recorded narrow/wide manual QA.
 
-Acceptance gate:
+### Then: first-slice parity review
 
-- One hero can complete a seeded run using at least two mechanically different weapons and two working passives.
-- Level choices are deterministic under a seed but not fixed in normal play.
-- Golden tests cover each level of every included weapon/passive and every character passive boundary.
-- Collision, cooldown, damage, XP, queued-level, max-slot, and invalid-upgrade tests pass without browser, network, or telemetry dependencies.
-- Existing battery/gold ownership tests continue to pass.
+- verify the six hero traits, six weapon tables, passives, evolution recipes, wave timings, enemy stats, XP curve, and chest rules against current authoritative base-game sources;
+- correct any simplified rule that is not one of the two accepted divergences;
+- improve end-stage sequencing and reward presentation;
+- replace remaining development-oriented labels/silhouettes only with original or provenance-approved assets.
 
-### P1 — authentic Code Dungeon stage loop
+### Later base-game work
 
-- [ ] Replace random once-per-second spawning with a stage timeline that selects the intended enemy family, interval, density, elite/miniboss events, and final threat by elapsed time.
-- [ ] Move stage duration from the 30-second smoke schedule to the approved full-run cadence. Keep an accelerated deterministic fixture for tests; do not shorten production rules to make QA convenient.
-- [ ] Implement enemy health/speed/damage scaling and per-kind movement/contact behavior from locked data.
-- [ ] Implement spawn placement, off-screen handling, despawn/recycling, and bounded-entity degradation without changing reward totals.
-- [ ] Add the correct end-of-stage sequence instead of declaring victory solely because one boss chest disappeared.
+- additional base stages and roster;
+- broader weapon/passive/evolution pool;
+- relic progression and collection/discovery views;
+- Arcanas/Darkanas and advanced unions;
+- Hyper, Hurry, Inverse, Endless, Limit Break, Golden Eggs, merchant, bestiary, and secrets;
+- secret characters and secret weapons.
 
-Acceptance gate:
+### Explicitly outside MVP
 
-- A seeded accelerated test traverses every wave, elite/miniboss event, boss/final event, victory, and defeat path.
-- A production-clock manual run matches the authored timeline.
-- Stress tests prove bounded enemies/projectiles/pickups and complete teardown.
+- all DLC;
+- marketplace publication automation and external asset purchases/imports;
+- Cursor/Windsurf certification, web extensions, and localization;
+- performance targets beyond bounded-resource stability.
 
-### P2 — pickups, treasure, builds, and evolution
+## Historical milestone record
 
-- [ ] Add the verified XP gem tiers and condensed-gem banking without XP loss.
-- [ ] Add core floor/light-source pickups: healing, magnet, freeze, screen clear, and gold variants as appropriate.
-- [ ] Make chests grant eligible item upgrades and visually disclose the result; retain the approved Token Guild gold payout alongside the item result.
-- [ ] Implement max-level weapon + required passive + eligible chest evolution checks.
-- [ ] Implement and test the first complete evolution recipe set for the shipped weapons; registry entries must not exist without runtime support.
-- [ ] Add chest reward multiplicity/luck only after the one-item chest and evolution path are solid.
+The original execution plans are retained permanently:
 
-Acceptance gate:
+- [P0 rules and combat](plans/p0-rules-and-combat.md)
+- [P1 stage loop](plans/p1-stage-loop.md)
+- [P2 pickups, treasure, and evolution](plans/p2-pickups-treasure-evolution.md)
+- [P3 meta progression and unlocks](plans/p3-meta-progression-unlocks.md)
+- [P4 production telemetry](plans/p4-production-telemetry.md)
+- [P5 presentation and game feel](plans/p5-presentation-and-game-feel.md)
 
-- Every map reward has exactly one owner and cannot auto-credit before collection.
-- Table-driven tests cover ordinary chest, no-eligible-item fallback, evolution success/failure, duplicate collection, condensed XP, and each pickup effect.
-- Summary and PNG export accurately report the completed build and rewards.
-
-### P3 — base meta progression and unlocks
-
-- [ ] Replace unlimited Guild Might with the approved bounded PowerUp rank/cost rules while preserving already earned progress through an explicit migration.
-- [ ] Add the essential base PowerUp shop stats and a safe full-refund flow.
-- [ ] Define and implement character and stage unlock conditions; stop unlocking every hero by default for new profiles.
-- [ ] Add collection/evolution discovery and the minimum relic-gated systems needed by the chosen base progression path.
-- [ ] Add Reroll, Skip, and Banish only with their unlocks, persistence, and level-up-pool tests.
-- [ ] Keep the battery upgrade as an additional Token Guild meta track, not a replacement for base PowerUps.
-
-Acceptance gate:
-
-- Fresh, migrated, corrupt, refund, unlock, duplicate-reward, reset, and restart scenarios are deterministic and preserve unrelated state.
-- Every purchase/unlock has a visible reason, bounded value, and idempotent persistence path.
-
-### P4 — production token source for the accepted battery system
-
-This is required for Token Guild to function as intended, although it is not a *Vampire Survivors* parity item.
-
-- [ ] Remove or hide the unimplemented OTLP setting until a real adapter exists.
-- [ ] Implement one stable, opt-in exact adapter first, preferably the proven loopback OTLP route after re-auditing Token Master.
-- [ ] Keep synthetic mode as an explicit demo/test source, not a silent substitute for production telemetry.
-- [ ] Move event production to the extension host and send validated token events to the webview through IPC.
-- [ ] Test malformed/oversized payloads, deduplication, activity/idle transitions, port conflict, teardown, remote-host behavior, consent, and secret/raw-content non-retention.
-- [ ] Ensure the battery can deplete and recharge under realistic telemetry; ensure default batching can actually exercise positive overflow coin values when expected.
-- [ ] Remove disconnected thinking/error/completion/Berserk gameplay hooks unless separately approved as divergences.
-
-Acceptance gate:
-
-- Exact real-token fixtures and synthetic fixtures traverse the same normalized battery boundary.
-- Disabling the adapter closes all listeners and stops observation.
-- No prompt, response, workspace content, credential, authorization header, or raw trace body is persisted or logged.
-
-### P5 — presentation and game-feel pass
-
-- [ ] Replace debug circles/squares with original or properly licensed readable hero, enemy, projectile, gem, chest, and effect assets.
-- [ ] Add hit, death, pickup, level-up, chest, evolution, boss, lockout, and victory/defeat feedback without obscuring gameplay.
-- [ ] Add event-complete SFX and music controls; keep reduced-motion and mute behavior.
-- [ ] Add an inventory/build display and pause information comparable in clarity to the target experience.
-- [ ] Complete keyboard, screen-reader, focus, contrast, responsive-width, hidden-view, reload, and long-run manual matrices.
-- [ ] Add browser-level webview interaction tests so upgrade clicks, dialogs, pause, export, resize, and screen transitions are no longer manual-only regressions.
-
-Acceptance gate:
-
-- The packaged VSIX passes automated checks and a recorded narrow/wide-sidebar playthrough.
-- Visual effects remain legible under high entity density and reduced motion.
-- Asset provenance is documented for every packaged file.
-
-## Explicitly later, not part of the next working pass
-
-- Additional base stages and the full base roster beyond the first proven content slice.
-- Arcanas/Darkanas, advanced unions, secret characters, Golden Eggs, Endless/Inverse/Hurry/Hyper/Limit Break, bestiary, merchant, and secrets.
-- All DLC content.
-- Cursor/Windsurf certification, web extensions, localization, marketplace publishing automation, and performance targets beyond bounded-resource stability.
-
-These are not rejected. They follow the first authentic, fully tested base-game slice.
-
-## Milestone status
-
-P0 is complete and reviewed. The data-driven first-stage runtime now covers the six mapped classes, six starting weapons with level tables, projectile/area combat, contact invulnerability, queued level-ups, seeded eligible cards, bounded inventories, and battery-only token telemetry. P1 is complete and reviewed: Code Dungeon now has a production 30-minute authored timeline, mapped enemy registry, wave density/intervals, scaling, miniboss/final-threat events, bounded spawning, and explicit victory/defeat paths. P2 is complete and reviewed: tiered XP/condensed gems, collection-owned tactical pickups, deterministic one-item chest rewards, the first five evolution recipes, reward history, and summary/export disclosure are implemented. P3 is complete and reviewed: bounded/costed/refundable PowerUps, safe persisted unlock/relic records, fresh-profile hero gating, deterministic unlock conditions, and gated Reroll/Skip/Banish actions are implemented. P4 is complete and reviewed: the opt-in loopback OTLP/HTTP JSON adapter, bounded TokenBus dedupe, host-to-webview event IPC, explicit synthetic toggle, lifecycle/port/error/privacy tests, and removal of disconnected thinking/error/completion/Berserk gameplay hooks are implemented. P5 is complete and reviewed: original vector map silhouettes, bounded visual/audio/live feedback, reduced-motion and focus behavior, responsive safeguards, accessible counter announcements, and truthful build/treasure PNG export are implemented. Evidence is recorded in `.dev/plans/p0-rules-and-combat.md`, `.dev/plans/p1-stage-loop.md`, `.dev/plans/p2-pickups-treasure-evolution.md`, `.dev/plans/p3-meta-progression-unlocks.md`, `.dev/plans/p4-production-telemetry.md`, and `.dev/plans/p5-presentation-and-game-feel.md`; the unchecked bullets above remain the original audit trail. No P0-P5 milestone is currently active.
+Their completion means the scoped foundation and recorded tests passed at that time. It does not mean full base-game parity or that every engine helper is reachable from the shipped UI.

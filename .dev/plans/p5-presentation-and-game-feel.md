@@ -3,12 +3,14 @@
 Status: implemented and reviewed; acceptance gate passed.
 Date: 2026-08-01
 
+> Retrospective review (2026-08-01): presentation helpers and static/accessibility assertions passed, but the Extension Development Host smoke does not click or inspect the webview DOM. Browser-level interaction coverage remains a P6 prerequisite; this plan remains a completed presentation foundation.
+
 ## Research and cross-check
 
 Inputs:
 
-- `.dev/Vampire Survivors Mapping/00_OVERVIEW_AND_ARCHITECTURE.md`
-- `.dev/Vampire Survivors Mapping/13_AUDIO_AND_PERSISTENCE_SCHEMA_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/00_OVERVIEW_AND_ARCHITECTURE.md`
+- `.dev/plans/Vampire Survivors Mapping/13_AUDIO_AND_PERSISTENCE_SCHEMA_MAPPING.md`
 - `.dev/VAMPIRE_SURVIVORS_PARITY_TODO.md` P5 scope and acceptance gate
 - current `src/webview/main.ts`, `src/webview/style.css`, `src/webview/audio.ts`, `src/webview/shareCard.ts`, and UI tests
 

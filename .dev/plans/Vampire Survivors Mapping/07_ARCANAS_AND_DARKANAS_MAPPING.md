@@ -1,4 +1,6 @@
-# Arcanas & Darkanas System 1:1 Mapping Specification
+# Arcanas and Darkanas: later-phase planning map
+
+> Planning status (2026-08-01): retained later-phase reference. Arcanas and Darkanas are outside the current MVP and none of these entries should be described as shipped.
 
 ## 1. Overview & Core Gameplay Mechanics
 

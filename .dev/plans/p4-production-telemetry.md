@@ -7,7 +7,7 @@ Date: 2026-08-01
 
 Inputs:
 
-- `.dev/Vampire Survivors Mapping/` telemetry and progression notes
+- `.dev/plans/Vampire Survivors Mapping/` telemetry and progression notes
 - `.dev/VAMPIRE_SURVIVORS_PARITY_TODO.md` P4 scope and acceptance gate
 - `.dev/decisions/telemetry.md`
 - current `src/telemetry/tokenBus.ts`, `src/shared/validation.ts`, `src/shared/types.ts`, `src/webview/main.ts`, and `src/extension/extension.ts`

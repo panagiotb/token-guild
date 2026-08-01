@@ -5,12 +5,12 @@ This is the living execution contract. [CURRENT_MANUAL.md](CURRENT_MANUAL.md) de
 ## Current status
 
 - **Release:** `0.1.0` deterministic Canvas/DOM vertical slice.
-- **Completed:** P0 rules/combat, P1 Code Dungeon stage loop, P2 pickups/treasure/evolution, P3 meta progression/unlocks, P4 production telemetry, P5 presentation/game feel.
+- **Completed plan foundations:** P0 rules/combat, P1 Code Dungeon stage loop, P2 pickups/treasure/evolution, P3 meta progression/unlocks, P4 production telemetry, P5 presentation/game feel. “Completed” here records each plan's scoped work; it does not mean every foundation is exposed in production or that base-game parity is complete.
 - **Renderer:** original Canvas/vector silhouettes with DOM controls; no external art packaged.
 - **Telemetry:** synthetic fixture by default; opt-in loopback OTLP/HTTP JSON adapter on localhost with bounded input, dedupe, and teardown.
 - **Quality evidence:** 73 unit tests, strict typecheck, lint, build, VSIX package, and `git diff --check` pass on 2026-08-01. Host smoke opens the contributed webview but does not automate DOM clicks.
 - **Accepted divergences:** token battery gameplay and Token Guild gold acquisition only.
-- **Next work:** none is implicitly active. Every future unattended run must choose one parity item and write a plan first.
+- **Next work:** [P6 production-path completeness](plans/NEXT_DEVELOPMENT.md) is proposed and ordered, but implementation is not implicitly authorized by this documentation review.
 
 ## Scope boundary
 
@@ -35,11 +35,12 @@ The project remains MVP-only:
 10. **Respect authority.** Local implementation, tests, builds, approved online research, and documentation are autonomous. Stop before external publication/messages, credentials, destructive operations, network exposure, licensing decisions, or material scope changes.
 11. **Report honestly.** A helper, registry record, mock, or unit test is not shipped functionality until wired through the production path. Record limitations explicitly.
 12. **Leave a handoff.** End every unattended run with completed work, commands/results, remaining risks, and the exact next step.
+13. **Retain every plan.** Plans are permanent project records. Never delete completed, abandoned, or superseded plans; mark their status and create a dated successor or addendum when direction changes.
 
 ## Standard step cycle
 
 1. Inspect repository status, current manual, active backlog item, implementation, and related tests.
-2. Add or update the active plan on disk; include research and source links when facts may change.
+2. Add or update the active plan on disk; include research and source links when facts may change. Preserve the previous plan text or status when superseding it.
 3. Implement one foundation slice and its tests.
 4. Run focused tests, then the relevant regression gate.
 5. Review the diff for scope, security/privacy, reward ownership, migration safety, asset provenance, and generated files.

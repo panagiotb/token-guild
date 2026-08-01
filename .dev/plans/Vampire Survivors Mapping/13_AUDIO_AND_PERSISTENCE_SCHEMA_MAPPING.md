@@ -1,8 +1,10 @@
-# Audio SFX & Persistence Schema 1:1 Mapping Specification
+# Audio and persistence: planning reference
+
+> Planning status (2026-08-01): retained reference, not a production schema. Current persistence types, migrations, validation, and tested audio behavior are authoritative; ignore telemetry-event triggers that exceed the approved battery/gold divergence.
 
 ## 1. Overview
 
-This document details retro 8-bit sound triggers mapped to streaming IDE telemetry events and the TypeScript schema extensions for VS Code `globalState` persistence.
+This document preserves early sound-trigger and persistence-schema proposals. Current TypeScript state, migrations, validation, and tested AudioManager behavior take precedence; telemetry-specific triggers are not approved outside the battery/gold divergence.
 
 ---
 

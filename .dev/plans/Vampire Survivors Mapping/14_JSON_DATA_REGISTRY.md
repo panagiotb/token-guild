@@ -1,12 +1,14 @@
-# Machine-Readable JSON Registry & Exhaustive Data Specifications
+# Aspirational JSON registry examples
+
+> Planning status (2026-08-01): aspirational examples only, not production-ready JSON. Canonical current registries live in `src/game/data/`; verify names, types, formulas, balance, and scope before porting any entry.
 
 ## 1. Overview
 
-This document provides complete, production-ready machine-readable JSON tables for direct integration into `Token Guild` codebase at `src/webview/data/`.
+This document preserves early JSON examples for planning and terminology. They are incomplete, unverified, and incompatible with parts of the current TypeScript model. Do not integrate them directly; use the typed registries under `src/game/data/` as the canonical implementation boundary.
 
 ---
 
-## 2. Characters Registry (`src/webview/data/classes.json`)
+## 2. Characters registry example
 
 ```json
 [
@@ -79,7 +81,7 @@ This document provides complete, production-ready machine-readable JSON tables f
 
 ---
 
-## 3. Weapons Registry (`src/webview/data/weapons.json`)
+## 3. Weapons registry example
 
 ```json
 [
@@ -184,7 +186,7 @@ This document provides complete, production-ready machine-readable JSON tables f
 
 ---
 
-## 4. Passives Registry (`src/webview/data/passives.json`)
+## 4. Passives registry example
 
 ```json
 [
@@ -210,7 +212,7 @@ This document provides complete, production-ready machine-readable JSON tables f
 
 ---
 
-## 5. Guild PowerUps Registry (`src/webview/data/powerups.json`)
+## 5. Guild PowerUps registry example
 
 ```json
 [
@@ -228,7 +230,7 @@ This document provides complete, production-ready machine-readable JSON tables f
 
 ---
 
-## 6. Relics Registry (`src/webview/data/relics.json`)
+## 6. Relics registry example
 
 ```json
 [
@@ -247,7 +249,7 @@ This document provides complete, production-ready machine-readable JSON tables f
 
 ---
 
-## 7. Arcanas Registry (`src/webview/data/arcanas.json`)
+## 7. Arcanas registry example
 
 ```json
 [

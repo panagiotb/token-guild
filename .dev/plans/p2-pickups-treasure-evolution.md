@@ -3,13 +3,15 @@
 Status: implemented and reviewed; acceptance gate passed.
 Date: 2026-08-01
 
+> Retrospective review (2026-08-01): the pickup effects and one-item chest path passed their scoped simulation tests, but tactical pickups have no authored production spawn source and chest ownership remains global to the run. Treat this as a completed engine foundation; production completion moved to [P6](NEXT_DEVELOPMENT.md).
+
 ## Research and cross-check
 
 Inputs:
 
-- `.dev/Vampire Survivors Mapping/02_WEAPONS_AND_EVOLUTIONS_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/03_PASSIVES_AND_POWERUPS_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/04_PICKUPS_DROPS_AND_TELEMETRY_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/02_WEAPONS_AND_EVOLUTIONS_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/03_PASSIVES_AND_POWERUPS_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/04_PICKUPS_DROPS_AND_TELEMETRY_MAPPING.md`
 - `.dev/VAMPIRE_SURVIVORS_PARITY_TODO.md`
 - Vampire Survivors references: [Experience Gem](https://vampire-survivors.fandom.com/wiki/Experience_Gem), [Weapons](https://vampire-survivors.fandom.com/wiki/Weapons), [Evolution](https://vampire-survivors.fandom.com/wiki/Evolution), and [Passive items](https://vampire-survivors.fandom.com/wiki/Passive_items)
 

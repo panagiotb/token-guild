@@ -1,4 +1,6 @@
-# Stages, Enemies & Bosses Exhaustive 1:1 Mapping Matrix
+# Stages, enemies, and bosses: planning map
+
+> Planning status (2026-08-01): retained reference, not a shipped contract. Verify wave timings and enemy rules before use; token rate, code complexity, errors, and terminal exits do not drive production encounters.
 
 ## 1. Overview & Dungeon Raid Mechanics
 

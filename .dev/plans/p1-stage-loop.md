@@ -7,8 +7,8 @@ Date: 2026-08-01
 
 Inputs:
 
-- `.dev/Vampire Survivors Mapping/06_STAGES_ENEMIES_AND_BOSSES_MAPPING.md`
-- `.dev/Vampire Survivors Mapping/14_JSON_DATA_REGISTRY.md`
+- `.dev/plans/Vampire Survivors Mapping/06_STAGES_ENEMIES_AND_BOSSES_MAPPING.md`
+- `.dev/plans/Vampire Survivors Mapping/14_JSON_DATA_REGISTRY.md`
 - `.dev/VAMPIRE_SURVIVORS_PARITY_TODO.md`
 - current `src/game/data/stages.json` and `src/game/simulation.ts`
 - Vampire Survivors references: [Enemies](https://vampire-survivors.fandom.com/wiki/Enemies), [Stages](https://vampire-survivors.fandom.com/wiki/Stages), and [The Reaper](https://vampire-survivors.fandom.com/wiki/The_Reaper)

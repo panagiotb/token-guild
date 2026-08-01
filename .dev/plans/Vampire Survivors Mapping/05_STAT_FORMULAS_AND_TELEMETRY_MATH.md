@@ -1,8 +1,10 @@
-# Stat Formulas & IDE Telemetry Mathematical Binding 1:1 Specification
+# Stat formulas: planning reference with rejected telemetry bindings
+
+> Planning status (2026-08-01): retained formula reference, not an implementation contract. Current TypeScript behavior is authoritative; telemetry may power the battery/gold divergence only and must remain orthogonal to combat stats.
 
 ## 1. Overview & Mathematical Integrity
 
-**Token Guild** implements exact mathematical formulas from *Vampire Survivors* for combat damage, cooldown caps, area scaling, and experience requirements, while binding streaming IDE telemetry metrics directly into these equations.
+This document preserves candidate formulas and early telemetry-binding proposals. It does not describe current implementation or verified exact parity. Streaming telemetry must not enter combat/stat equations under the accepted product decisions.
 
 ---
 
@@ -74,7 +76,7 @@ $$\text{Damage}_{\text{mob}} = \text{BaseDamage} \times (1.0 + 0.05 \times \text
 
 ---
 
-## 5. TypeScript Reference Implementation (`src/webview/data/math.ts`)
+## 5. Historical TypeScript sketch (not a production path)
 
 ```typescript
 export interface CombatStats {

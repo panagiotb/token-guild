@@ -1,4 +1,6 @@
-# Base Weapons, Evolved Weapons & Leveling Tables Exhaustive 1:1 Mapping Matrix
+# Base weapons and evolutions: planning map
+
+> Planning status (2026-08-01): retained reference, not a shipped contract. Verify every weapon table and evolution rule before implementation; canonical current data lives in `src/game/data/`.
 
 ## 1. Overview & Mechanics
 

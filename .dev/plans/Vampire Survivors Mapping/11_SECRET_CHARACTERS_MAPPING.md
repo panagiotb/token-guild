@@ -1,8 +1,10 @@
-# Secret & Special Characters 1:1 Mapping Specification
+# Secret and special characters: later-phase planning map
+
+> Planning status (2026-08-01): retained later-phase reference. Secret characters are outside the current MVP and require fresh verification before use.
 
 ## 1. Overview
 
-This document details all secret and hidden characters from *Vampire Survivors* mapped to **Token Guild** retro fantasy classes, including unlock passcodes, passive growth math, starting stats, and IDE telemetry interactions.
+This document preserves candidate reskins for secret and hidden characters, including unverified unlock, growth, and telemetry ideas. It is later-phase reference material; its telemetry interactions are not approved product behavior.
 
 ---
 
