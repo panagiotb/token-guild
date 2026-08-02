@@ -1,0 +1,15 @@
+{
+  "levelRequirements": {
+    "earlyIncrement": 10,
+    "midIncrement": 13,
+    "lateIncrement": 16,
+    "earlyLastLevel": 20,
+    "midLastLevel": 40,
+    "level20BonusXp": 600,
+    "level40BonusXp": 2400
+  },
+  "thresholds": {
+    "level20BonusGrowth": 1,
+    "level40BonusGrowth": 1
+  }
+}

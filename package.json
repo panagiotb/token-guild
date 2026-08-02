@@ -1,0 +1,101 @@
+{
+  "name": "token-guild",
+  "displayName": "Token Guild",
+  "description": "A small retro auto-battler driven by synthetic and opt-in LLM telemetry.",
+  "version": "0.1.0",
+  "publisher": "evdaimon-games",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/panagiotb/token-guild.git"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": ">=1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:tokenGuild.guildView"
+  ],
+  "main": "./dist/extension/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tokenGuild",
+          "title": "Token Guild",
+          "icon": "resources/token-guild.svg"
+        }
+      ]
+    },
+    "views": {
+      "tokenGuild": [
+        {
+          "id": "tokenGuild.guildView",
+          "name": "Guild",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tokenGuild.resetProgress",
+        "title": "Token Guild: Reset Progress"
+      }
+    ],
+    "configuration": {
+      "title": "Token Guild",
+      "properties": {
+        "tokenGuild.telemetry.syntheticEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the deterministic synthetic telemetry driver."
+        },
+        "tokenGuild.telemetry.otlpEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the opt-in loopback OTLP/HTTP JSON or protobuf trace/log adapter. It listens only on localhost and never stores raw traces."
+        },
+        "tokenGuild.telemetry.otlpPort": {
+          "type": "number",
+          "default": 4318,
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Local port for the opt-in OTLP/HTTP JSON trace adapter (0 chooses an ephemeral port for development)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "npm run build:host && npm run build:webview",
+    "build:host": "esbuild src/extension/extension.ts --bundle --platform=node --external:vscode --format=cjs --outfile=dist/extension/extension.js --sourcemap",
+    "build:webview": "vite build",
+    "watch": "concurrently -k \"npm:watch:host\" \"npm:watch:webview\"",
+    "watch:host": "esbuild src/extension/extension.ts --bundle --platform=node --external:vscode --format=cjs --outfile=dist/extension/extension.js --sourcemap --watch",
+    "watch:webview": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest run",
+    "test:synthetic": "vitest run tests/unit/simulation.test.ts tests/unit/tokenBus.test.ts tests/unit/telemetryMapping.test.ts tests/unit/mvpScenario.test.ts",
+    "test:integration": "npm run build && node tests/integration/launch.cjs",
+    "test:e2e": "npm run test:integration",
+    "package": "npm run build && vsce package --no-dependencies",
+    "assets:index": "node scripts/build-asset-index.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^3.6.0",
+    "concurrently": "^9.0.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.0.0",
+    "jsdom": "^26.1.0",
+    "mocha": "^11.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
+  }
+}
