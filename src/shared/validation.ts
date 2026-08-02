@@ -1,6 +1,12 @@
 import { PROGRESS_SCHEMA_VERSION } from './types';
 import type { PersistedProgress, TokenStreamEvent, WebviewToHostMessage } from './types';
 
+/** Per-event limits keep a malformed or forged producer from inflating a run
+ * before the host can apply its battery/economy rules. These are deliberately
+ * generous for a single completion, but finite and shared by every ingress. */
+export const MAX_TOKEN_EVENT_COUNT = 1_000_000;
+export const MAX_TOKEN_EVENT_RATE = 1_000_000;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -20,11 +26,11 @@ export function validateTokenStreamEvent(value: unknown): TokenStreamEvent {
   if (!isFiniteNumber(value.timestampMs) || !isFiniteNumber(value.count) || !isFiniteNumber(value.tokensPerSecond) || !isFiniteNumber(value.confidence)) {
     throw new Error('Invalid token stream numeric field');
   }
-  if (value.count < 0 || value.tokensPerSecond < 0 || value.confidence < 0 || value.confidence > 1) {
+  if (value.count < 0 || value.count > MAX_TOKEN_EVENT_COUNT || value.tokensPerSecond < 0 || value.tokensPerSecond > MAX_TOKEN_EVENT_RATE || value.confidence < 0 || value.confidence > 1) {
     throw new Error('Token stream values are out of range');
   }
-  for (const field of ['outputTokens', 'inputTokens', 'cacheTokens'] as const) {
-    if (value[field] !== undefined && (!isFiniteNumber(value[field]) || value[field] < 0)) throw new Error('Token telemetry fields are out of range');
+  for (const field of ['outputTokens', 'reasoningTokens', 'inputTokens', 'cacheTokens'] as const) {
+    if (value[field] !== undefined && (!isFiniteNumber(value[field]) || value[field] < 0 || value[field] > MAX_TOKEN_EVENT_COUNT)) throw new Error('Token telemetry fields are out of range');
   }
   if (value.isAgentActive !== undefined && typeof value.isAgentActive !== 'boolean') throw new Error('Invalid agent activity flag');
   if (value.runId !== undefined && (typeof value.runId !== 'string' || value.runId.length > 128)) {
@@ -55,14 +61,32 @@ export function validateProgress(value: unknown): PersistedProgress {
 
 export function validateWebviewMessage(value: unknown): WebviewToHostMessage {
   if (!isRecord(value) || value.version !== 1 || typeof value.type !== 'string') throw new Error('Invalid webview message envelope');
-  if (!['READY', 'SAVE_PROGRESS', 'RECORD_RUN_REWARD', 'START_RUN', 'RESET_PROGRESS'].includes(value.type)) throw new Error('Unknown webview message type');
-  if (value.type === 'SAVE_PROGRESS') validateProgress(value.payload);
-  if (value.type === 'START_RUN' && (!isRecord(value.payload) || typeof value.payload.heroId !== 'string' || value.payload.heroId.length > 64)) throw new Error('Invalid start-run payload');
+  if (!['READY', 'PURCHASE_UPGRADE', 'PURCHASE_BATTERY', 'REFUND_UPGRADES', 'UPDATE_SETTINGS', 'UPDATE_TELEMETRY_SETTINGS', 'RECORD_RUN_REWARD', 'START_RUN', 'RUN_STEP', 'RUN_TELEMETRY', 'RUN_ACTION', 'RESET_PROGRESS'].includes(value.type)) throw new Error('Unknown webview message type');
+  if (value.type === 'PURCHASE_UPGRADE' && (!isRecord(value.payload) || typeof value.payload.upgradeId !== 'string' || !isSafeKey(value.payload.upgradeId, 64))) throw new Error('Invalid upgrade purchase payload');
+  if (value.type === 'UPDATE_SETTINGS' && (!isRecord(value.payload) || typeof value.payload.muted !== 'boolean' || !isFiniteNumber(value.payload.volume) || value.payload.volume < 0 || value.payload.volume > 1)) throw new Error('Invalid settings payload');
+  if (value.type === 'UPDATE_TELEMETRY_SETTINGS' && (!isRecord(value.payload) || typeof value.payload.syntheticEnabled !== 'boolean')) throw new Error('Invalid telemetry settings payload');
+  if (value.type === 'START_RUN' && (!isRecord(value.payload) || typeof value.payload.heroId !== 'string' || !isSafeKey(value.payload.heroId, 64) || typeof value.payload.stageId !== 'string' || !isSafeKey(value.payload.stageId, 64) || typeof value.payload.runId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(value.payload.runId))) throw new Error('Invalid start-run payload');
+  if (value.type === 'RECORD_RUN_REWARD' && (!isRecord(value.payload) || typeof value.payload.runId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(value.payload.runId))) throw new Error('Invalid run reward payload');
+  if (value.type === 'RUN_STEP') {
+    const step = value.payload;
+    const input = isRecord(step) ? step.input : undefined;
+    if (!isRecord(step) || typeof step.runId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(step.runId) || typeof step.intentSequence !== 'number' || !Number.isSafeInteger(step.intentSequence) || step.intentSequence < 1 || !isFiniteNumber(step.deltaSeconds) || step.deltaSeconds <= 0 || step.deltaSeconds > 0.25 || !isRecord(input) || ['up', 'down', 'left', 'right'].some((key) => typeof input[key] !== 'boolean')) throw new Error('Invalid run step payload');
+  }
+  if (value.type === 'RUN_TELEMETRY') {
+    const telemetry = value.payload;
+    if (!isRecord(telemetry) || typeof telemetry.runId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(telemetry.runId) || typeof telemetry.intentSequence !== 'number' || !Number.isSafeInteger(telemetry.intentSequence) || telemetry.intentSequence < 1) throw new Error('Invalid run telemetry payload');
+    validateTokenStreamEvent(telemetry.event);
+  }
+  if (value.type === 'RUN_ACTION') {
+    const action = value.payload;
+    const cardId = isRecord(action) ? action.cardId : undefined;
+    const actionType = isRecord(action) && typeof action.action === 'string' ? action.action : undefined;
+    const validCardId = cardId === undefined || (typeof cardId === 'string' && isSafeKey(cardId, 128));
+    if (!isRecord(action) || typeof action.runId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(action.runId) || typeof action.intentSequence !== 'number' || !Number.isSafeInteger(action.intentSequence) || action.intentSequence < 1 || !['upgrade', 'reroll', 'skip', 'banish', 'revive', 'quit', 'pause', 'resume'].includes(actionType ?? '') || !validCardId) throw new Error('Invalid run action payload');
+  }
   if (value.type === 'RECORD_RUN_REWARD') {
     const reward = value.payload;
-    if (!isRecord(reward) || typeof reward.runId !== 'string' || reward.runId.length === 0 || reward.runId.length > 128 || !isFiniteNumber(reward.gold) || reward.gold < 0 || !isFiniteNumber(reward.tokens) || reward.tokens < 0) throw new Error('Invalid run reward payload');
-    const hasHeroProgress = reward.heroId !== undefined || reward.level !== undefined;
-    if (hasHeroProgress && (typeof reward.heroId !== 'string' || reward.heroId.length === 0 || reward.heroId.length > 64 || !isFiniteNumber(reward.level) || !Number.isInteger(reward.level) || reward.level < 1 || reward.level > 999)) throw new Error('Invalid hero progression reward');
+    if (!isRecord(reward) || typeof reward.runId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(reward.runId)) throw new Error('Invalid run reward payload');
   }
   return value as WebviewToHostMessage;
 }

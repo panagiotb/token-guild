@@ -64,9 +64,11 @@ export class BatteryEngine {
     const overflow = Math.max(0, beforeOverflow - state.maxCapacity);
     const currentCapacity = Math.min(state.maxCapacity, beforeOverflow);
     const sessionOverflowTotal = state.sessionOverflowTotal + overflow;
-    const saturationFactor = 1 + sessionOverflowTotal / 10000;
-    const multiplier = Math.max(0, finite(floorMultiplier));
-    const goldSpawned = Math.floor((overflow / (40 * saturationFactor)) * multiplier);
+    // Overflow is retained for telemetry/diagnostics only. It is never a
+    // gameplay currency source; gold must come from authored pickups or the
+    // stage result, matching the base-game economy contract.
+    void floorMultiplier;
+    const goldSpawned = 0;
     const isLockedOut = currentCapacity <= 0 || (state.isLockedOut && currentCapacity < state.maxCapacity * this.LOCKOUT_THRESHOLD);
     return {
       newState: { level: state.level, currentCapacity, maxCapacity: state.maxCapacity, isLockedOut, idleTimeSeconds, sessionOverflowTotal },

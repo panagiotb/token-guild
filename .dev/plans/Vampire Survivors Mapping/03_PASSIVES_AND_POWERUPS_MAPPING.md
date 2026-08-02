@@ -17,7 +17,7 @@ In **Token Guild**, passive items and power-up meta-upgrades provide permanent a
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Power Gauntlets** | Spinach | 5 | $+10\%$ Might | $+50\%$ Might | Dragon Breath | **Power Gauntlets** |
 | **Iron Armor** | Armor | 5 | $+1$ Armor, $-1$ Damage Taken | $+5$ Armor | Bouncing Arrow *(Runetracer)* | **Iron Armor** |
-| **Heart of Vitality** | Hollow Heart | 5 | $+20\%$ Max Health | $+100\%$ Max HP | Broadsword *(Whip)* | **Heart of Vitality** |
+| **Heart of Vitality** | Hollow Heart | 5 | $\times1.2$ Max Health | $\times2.48832$ Max HP | Broadsword *(Whip)* | **Heart of Vitality** |
 | **Phoenix Amulet** | Pummarola | 5 | $+0.2$ HP/sec Recovery | $+1.0$ HP/sec | Aegis Barrier *(Garlic)* | **Phoenix Amulet** |
 | **Haste Amulet** | Empty Tome | 5 | $-8\%$ Cooldown | $-40\%$ Cooldown | Arcane Bolt *(Magic Wand)* | **Haste Amulet** |
 | **Orb of Expansion** | Candelabrador | 5 | $+10\%$ Attack Area | $+50\%$ Area | Battle Axe *(Axe)* | **Orb of Expansion** |
@@ -25,7 +25,7 @@ In **Token Guild**, passive items and power-up meta-upgrades provide permanent a
 | **Spellbinder Scroll** | Spellbinder | 5 | $+10\%$ Attack Duration | $+50\%$ Duration | Orbiting Grimoire *(King Bible)* | **Spellbinder Scroll** |
 | **Ring of Duplication** | Duplicator | 2 | $+1$ Projectile Amount | $+2$ Amount | Chain Lightning | **Ring of Duplication** |
 | **Wings of Hermes** | Wings | 5 | $+10\%$ Movement Speed | $+50\%$ MoveSpeed | Void Dart *(Shadow Pinion)* | **Wings of Hermes** |
-| **Token Magnetism** | Attractorb | 5 | $+33\%$ Pickup Radius | $+165\%$ Magnet | Alchemist Fire *(Santa Water)* | **Token Magnetism** |
+| **Token Magnetism** | Attractorb | 5 | Level-specific multiplicative Magnet | $3.980025\times$ Magnet | Alchemist Fire *(Santa Water)* | **Token Magnetism** |
 | **Clover of Fortune** | Clover | 5 | $+10\%$ Luck | $+50\%$ Luck | Celestial Cross *(Cross)* | **Clover of Fortune** |
 | **Crown of Wisdom** | Crown | 5 | $+8\%$ Growth (XP Gain) | $+40\%$ Growth | Purifying Nova *(Pentagram)* | **Crown of Wisdom** |
 | **Stone Mask** | Stone Mask | 5 | $+10\%$ Greed (Gold Gain) | $+50\%$ Greed | Feline Spirit *(Gatti Amari)* | **Stone Mask** |
@@ -38,6 +38,22 @@ In **Token Guild**, passive items and power-up meta-upgrades provide permanent a
 | **Ring of Clarity** | Silver Ring | 9 | $+5\%$ Duration, $+5\%$ Area | $+45\%$ Duration, $+45\%$ Area | Chrono Ray $\rightarrow$ Infinite Corridor | **Ring of Clarity** |
 
 ---
+
+## 2a. Current reward-pool rarity metadata (verified 2026-08-02)
+
+The [Passive items reference](https://vampire-survivors.fandom.com/wiki/Passive_items)
+records rarity as the level-up/treasure-pool weight. The current registry maps
+the implemented Token Guild reskins as follows: Spinach/Power Gauntlets 100,
+Armor/Iron Armor 100, Hollow Heart/Heart of Vitality 90,
+Pummarola/Phoenix Amulet 90, Empty Tome/Haste Amulet 50,
+Candelabrador/Orb of Expansion 100, Bracer/Iron Bracer 100,
+Spellbinder/Spellbinder Scroll 100, Duplicator/Ring of Duplication 50,
+Attractorb/Token Magnetism 100, Crown/Crown of Wisdom 80,
+Stone Mask/Stone Mask 80, Skull O'Maniac/Skull of Doom 40,
+Tirajisú/Tiragisu Ankh 40, and Torrona's Box/Pandora's Box 40.
+
+Chest selection applies these weights only after owned-item, max-rank, and
+Banish filtering; exact stage-specific chest chances remain open.
 
 ## 3. Explicit Level-by-Level Stat Progression Tables
 
@@ -61,10 +77,10 @@ In **Token Guild**, passive items and power-up meta-upgrades provide permanent a
 
 ### 3. **Heart of Vitality** *(VS: Hollow Heart — 5 Levels)*
 * **Level 1:** $+20\%$ Max HP.
-* **Level 2:** $+40\%$ Max HP total (+20%).
-* **Level 3:** $+60\%$ Max HP total (+20%).
-* **Level 4:** $+80\%$ Max HP total (+20%).
-* **Level 5:** $+100\%$ Max HP total (+20%).
+* **Level 2:** $\times1.44$ Max HP total (×1.2 current value).
+* **Level 3:** $\times1.728$ Max HP total (×1.2 current value).
+* **Level 4:** $\times2.0736$ Max HP total (×1.2 current value).
+* **Level 5:** $\times2.48832$ Max HP total (×1.2 current value).
 
 ---
 
@@ -129,11 +145,11 @@ In **Token Guild**, passive items and power-up meta-upgrades provide permanent a
 ---
 
 ### 11. **Token Magnetism** *(VS: Attractorb — 5 Levels)*
-* **Level 1:** $+33\%$ Pickup Radius.
-* **Level 2:** $+66\%$ Pickup Radius (+33%).
-* **Level 3:** $+99\%$ Pickup Radius (+33%).
-* **Level 4:** $+132\%$ Pickup Radius (+33%).
-* **Level 5:** $+165\%$ Pickup Radius (+33%).
+* **Level 1:** $1.5\times$ Magnet (+50%).
+* **Level 2:** $1.995\times$ Magnet (+33% of the current value).
+* **Level 3:** $2.49375\times$ Magnet (+25% of the current value).
+* **Level 4:** $2.9925\times$ Magnet (+20% of the current value).
+* **Level 5:** $3.980025\times$ Magnet (+33% of the current value).
 
 ---
 
@@ -200,14 +216,14 @@ Purchased in the Guild Hall meta-shop to upgrade permanent account stats across 
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Guild Might** | Might | 5 | $+5\%$ Damage | 200 Gold | $1.10\times$ | Increases raw damage output of all hero weapons. |
 | **Guild Armor** | Armor | 3 | $+1$ Armor | 600 Gold | $1.15\times$ | Reduces damage taken from enemy mob collisions. |
-| **Guild Vitality** | Max Health | 3 | $+10\%$ Max Health | 200 Gold | $1.10\times$ | Increases maximum HP bar capacity. |
+| **Guild Vitality** | Max Health | 3 | $\times1.1$ Max Health | 200 Gold | $1.10\times$ | Multiplies maximum HP by 1.1 per rank. |
 | **Guild Recovery** | Recovery | 5 | $+0.1$ HP/sec | 200 Gold | $1.10\times$ | Passive health regeneration per second. |
 | **Guild Haste** | Cooldown | 2 | $-2.5\%$ Cooldown | 900 Gold | $1.20\times$ | Increases weapon firing rate across all attacks. |
 | **Guild Expansion**| Area | 2 | $+5\%$ Attack Area | 300 Gold | $1.10\times$ | Expands projectile and aura hitboxes. |
 | **Guild Swiftness**| Speed | 2 | $+10\%$ Projectile Speed | 300 Gold | $1.10\times$ | Speeds up traveling projectiles. |
-| **Guild Duration** | Duration | 2 | $+10\%$ Effect Duration | 300 Gold | $1.10\times$ | Extends lifetime of orbiting and floor spells. |
+| **Guild Duration** | Duration | 2 | $+15\%$ Effect Duration | 300 Gold | $1.10\times$ | Extends lifetime of orbiting and floor spells. |
 | **Guild Duplication**| Amount | 1 | $+1$ Extra Projectile | 5,000 Gold | $1.50\times$ | Adds +1 projectile to all active weapons. |
-| **Guild Agility** | Move Speed | 2 | $+10\%$ Movement Speed | 300 Gold | $1.10\times$ | Increases hero walking velocity in dungeon canvas. |
+| **Guild Agility** | Move Speed | 2 | $+5\%$ Movement Speed | 300 Gold | $1.10\times$ | Increases hero walking velocity in dungeon canvas. |
 | **Token Magnetism** | Magnet | 2 | $+25\%$ Pickup Radius | 300 Gold | $1.10\times$ | Widens gem and coin auto-attraction distance. |
 | **Guild Fortune** | Luck | 3 | $+10\%$ Luck | 600 Gold | $1.15\times$ | Increases chances for 3-card and 5-card chest jackpots. |
 | **Token Growth** | Growth | 5 | $+3\%$ XP per stream token | 300 Gold | $1.10\times$ | Increases XP earned per streamed token. |
@@ -217,3 +233,14 @@ Purchased in the Guild Hall meta-shop to upgrade permanent account stats across 
 | **Guild Reroll** | Reroll | 5 | $+1$ Level-up Reroll | 1,000 Gold | $1.20\times$ | Rerolls 3-card level-up upgrade choices. |
 | **Guild Skip** | Skip | 5 | $+1$ Level-up Skip | 500 Gold | $1.15\times$ | Skips level-up choice and awards bonus XP. |
 | **Guild Banish** | Banish | 5 | $+1$ Item Banish | 1,000 Gold | $1.20\times$ | Removes selected item from current run drop pool. |
+
+### PowerUp purchase-cost parity note (2026-08-02)
+
+The `Base Gold Cost` column is the source initial price. The old per-row
+`Cost Scaling Multiplier` values are retained as historical mapping metadata,
+not as the active purchase formula. The implementation now uses the cited
+global PowerUp rule: first purchase at the initial price; later purchases add
+`initialPrice × (1 + alreadyBoughtInThatPowerUp)` plus
+`floor(20 × 1.1^totalBoughtAfterPurchase)`. Refunds reconstruct the exact sum
+from the persisted rank vector and keep the token-battery purchase track
+separate.

@@ -19,7 +19,7 @@ export class TokenBus {
 
   public ingest(raw: unknown): void {
     const event = validateTokenStreamEvent(raw);
-    const key = `${event.source}|${event.runId ?? ''}|${event.timestampMs}|${event.count}|${event.outputTokens ?? ''}|${event.inputTokens ?? ''}|${event.cacheTokens ?? ''}|${event.tokensPerSecond}|${event.isAgentActive ?? ''}`;
+    const key = `${event.source}|${event.runId ?? ''}|${event.timestampMs}|${event.count}|${event.outputTokens ?? ''}|${event.reasoningTokens ?? ''}|${event.inputTokens ?? ''}|${event.cacheTokens ?? ''}|${event.tokensPerSecond}|${event.isAgentActive ?? ''}`;
     if (this.seen.has(key)) return;
     this.seen.add(key);
     this.seenQueue.push(key);
@@ -54,7 +54,8 @@ export class TokenBus {
       const inputTokens = group.reduce((total, event) => total + (event.inputTokens ?? 0), 0);
       const cacheTokens = group.reduce((total, event) => total + (event.cacheTokens ?? 0), 0);
       const outputTokens = group.reduce((total, event) => total + (event.outputTokens ?? event.count), 0);
-      const aggregate: TokenStreamEvent = { source: first.source as TelemetrySource, accuracy: group.every((event) => event.accuracy === 'exact') ? 'exact' : 'estimated' as Accuracy, timestampMs: Math.max(...group.map((event) => event.timestampMs)), count, outputTokens, tokensPerSecond: weightedRate, confidence: Math.min(...group.map((event) => event.confidence)), inputTokens, cacheTokens, isAgentActive: group.some((event) => event.isAgentActive ?? event.tokensPerSecond > 0), ...(first.runId === undefined ? {} : { runId: first.runId }) };
+      const reasoningTokens = group.reduce((total, event) => total + (event.reasoningTokens ?? 0), 0);
+      const aggregate: TokenStreamEvent = { source: first.source as TelemetrySource, accuracy: group.every((event) => event.accuracy === 'exact') ? 'exact' : 'estimated' as Accuracy, timestampMs: Math.max(...group.map((event) => event.timestampMs)), count, outputTokens, ...(reasoningTokens > 0 ? { reasoningTokens } : {}), tokensPerSecond: weightedRate, confidence: Math.min(...group.map((event) => event.confidence)), inputTokens, cacheTokens, isAgentActive: group.some((event) => event.isAgentActive ?? event.tokensPerSecond > 0), ...(first.runId === undefined ? {} : { runId: first.runId }) };
       this.sink(aggregate);
     }
     return groups.size;

@@ -3,6 +3,8 @@
 Status: implemented and reviewed; acceptance gate passed.
 Date: 2026-08-01
 
+> Decision update (2026-08-02): the gold-acquisition divergence referenced below was withdrawn. Battery gating is now the only approved mechanics divergence; future gold work follows the [P7 roadmap](P7_FULL_GAME_ROADMAP.md). Historical acceptance text is retained as the record of this milestone.
+
 ## Research and cross-check
 
 Inputs reviewed:
@@ -41,7 +43,7 @@ P1 stage scheduling, P2 chest/evolution/pickup expansion, P3 meta progression, P
 ### Content contracts
 
 - `WeaponDefinition.levels[1..8]` is the only source for level-specific damage, cooldown, amount, area, speed, duration, pierce, and knockback.
-- `WeaponDefinition.pattern` is one of `targeted`, `fan`, `ricochet`, `aura`, or `bone`; it selects a deterministic runtime strategy.
+- `WeaponDefinition.pattern` is one of `targeted`, `slash`, `ricochet`, `aura`, or `bone`; it selects a deterministic runtime strategy. Facing-only Knife-family launches and bounded sequential volleys are data-owned through `aim` and `projectileInterval`.
 - `PassiveDefinition` provides stat, per-level value, and max level. The P0 pool includes the existing four passives plus the paired passives needed by the first six weapon recipes.
 - `ClassDefinition.baseStats` defines actual starting values; `passive` defines level-triggered increments. No UI label is rendered for an inactive stat.
 - `progression.json` stores the verified XP thresholds and boundary fixtures.

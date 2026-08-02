@@ -1,0 +1,25 @@
+{
+  "resourceLogs": [
+    {
+      "scopeLogs": [
+        {
+          "logRecords": [
+            {
+              "eventId": "fixture-completion-001",
+              "timeUnixNano": "4000000000000",
+              "attributes": [
+                { "key": "event.name", "value": { "stringValue": "codex.sse_event" } },
+                { "key": "event.kind", "value": { "stringValue": "response.completed" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "7" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "13" } },
+                { "key": "gen_ai.usage.cache_read.input_tokens", "value": { "intValue": "4" } },
+                { "key": "gen_ai.usage.reasoning_tokens", "value": { "intValue": "5" } },
+                { "key": "duration_ms", "value": { "intValue": "500" } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { applyTokenInput, chooseUpgrade, createRun, tick } from '../../src/game/
 describe('MVP Guild-to-run scenario', () => {
   it('completes a deterministic run and persists its reward once', async () => {
     const run = createRun('warrior', 123, {}, { clockScale: 60 });
+    run.hero.baseStats.hp = 100000; run.hero.baseStats.maxHp = 100000;
     run.hero.stats.hp = 100000; run.hero.stats.maxHp = 100000;
     run.hero.stats.magnet = 1000;
     for (let index = 0; index < 800 && run.phase !== 'summary'; index += 1) {

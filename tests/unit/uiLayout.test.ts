@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { formatHeroOptionDescription, formatHeroOptionLabel } from '../../src/webview/heroProgress';
+import { formatHeroOptionDescription, formatHeroOptionLabel, formatHeroTrait, formatHeroUnlockReason } from '../../src/webview/heroProgress';
 import { batteryFillPercent, formatBatteryTooltip } from '../../src/webview/batteryView';
 
 describe('responsive MVP layout', () => {
@@ -10,9 +10,12 @@ describe('responsive MVP layout', () => {
   });
 
   it('formats authoritative best-level hero labels without changing starting level semantics', () => {
-    expect(formatHeroOptionLabel('Wizard', 4)).toBe('Wizard - Level 4');
-    expect(formatHeroOptionDescription('Wizard', 4)).toContain('new runs start at Level 1');
-    expect(formatHeroOptionLabel('Wizard', 0)).toBe('Wizard - Level 1');
+    expect(formatHeroOptionLabel('Wizard')).toBe('Wizard');
+    expect(formatHeroOptionDescription('Wizard')).toContain('new runs start at Level 1');
+    expect(formatHeroOptionDescription('Wizard', 'Arcane Bolt', '+10% growth')).toContain('starts with Arcane Bolt');
+    expect(formatHeroTrait({ stat: 'growth', valuePerLevel: 0.1, intervalLevels: 5, maxBonus: 0.3 })).toContain('every 5 levels');
+    expect(formatHeroUnlockReason({ id: 'wizard', unlock: { description: 'Reach Level 5 with Warrior' } }, ['warrior'])).toBe('Reach Level 5 with Warrior');
+    expect(formatHeroUnlockReason({ id: 'warrior' }, ['warrior'])).toBe('Unlocked');
   });
 
   it('does not lock the sidebar to a fixed 300px width', () => {
@@ -26,8 +29,11 @@ describe('responsive MVP layout', () => {
     expect(css).toContain('.map-frame');
     expect(css).toContain('.map-toolbar');
     expect(css).toContain('.map-shell');
+    expect(css).toContain('max-width: 520px');
     expect(css).toContain('.enemy-counter');
     expect(css).toContain('data-tooltip');
+    expect(css).toContain('.has-tooltip::after');
+    expect(css).toContain('width: 16px; height: 16px');
     expect(css).toContain('.export-action');
     expect(css).toContain('transition: none');
     const main = readFileSync(new URL('../../src/webview/main.ts', import.meta.url), 'utf8');
@@ -36,18 +42,36 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('id="clock-counter"');
     expect(main).toContain('id="token-hud"');
     expect(main).toContain('id="battery-widget"');
+    expect(main).not.toMatch(/id="battery-widget"[^>]*title=/);
     expect(main).toContain('battery-lightning');
-    expect(main).toContain('Tokens Stored:');
+    expect(main).toContain('formatBatteryTooltip');
     expect(main).toContain('id="battery-lockout"');
     expect(main).toContain('batteryFillPercent');
+    expect(main).toContain('formatElapsedTime');
+    expect(main).toContain('has-tooltip');
+    expect(main).toContain('canvas.focus()');
+    expect(main).toContain("window.addEventListener('blur'");
+    expect(main).toContain("window.addEventListener('resize'");
+    expect(main).toContain("canvas.addEventListener('selectstart'");
+    expect(main).toContain("canvas.addEventListener('dragstart'");
+    expect(main).toContain('describeUpgrade');
+    expect(main).toContain('for (const definition of META_UPGRADES)');
+    expect(main).not.toContain('VISIBLE_META_UPGRADES');
     expect(main).toContain('count: 25');
     expect(main).toContain('tokensPerSecond: 100');
     expect(main).toContain('class="battery-strip"');
+    expect(main).toContain('class="map-toolbar" aria-label="Dungeon counters"><span');
+    expect(main).toContain('id="token-info"');
+    expect(main).toContain('id="battery-widget" tabindex="0" role="img"');
+    expect(main).not.toContain('class="battery-copy"');
     expect(main).toContain('id="enemy-spawned"');
     expect(main).toContain('id="enemy-defeated"');
     expect(main).toContain('id="enemy-active"');
     expect(main).toContain('id="pause-toggle"');
     expect(main).toContain('id="pause-screen"');
+    expect(main).toContain('id="stage-select"');
+    expect(main).toContain('id="hero-description"');
+    expect(main).toContain('stageId');
     expect(main).toContain('id="guild-content"');
     expect(main).toContain('formatPauseTitle');
     expect(main).toContain('if (paused) { renderPauseScreen(); return; }');
@@ -56,6 +80,15 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('<h2 id="run-title">Code Dungeon</h2><button');
     expect(main).toContain('class="cards map-upgrade-overlay hidden"');
     expect(main).toContain('renderUpgradeCards');
+    expect(main).toContain('id="revival-overlay"');
+    expect(main).toContain('id="finale-status"');
+    expect(main).toContain('summary-revival');
+    expect(main).toContain('summary-finale');
+    expect(main).toContain('stageFinaleDeadline');
+    expect(main).toContain("submitRevivalAction('revive')");
+    expect(main).toContain("submitRevivalAction('quit')");
+    expect(main).toContain('RUN_SNAPSHOT');
+    expect(main).toContain('shouldAcceptRunSnapshot');
     expect(main).toContain('downloadShareCard(run.summary, progress.gold)');
     expect(main).toContain('counter.dataset.tooltip');
     expect(main).not.toMatch(/id="enemy-(?:spawned|defeated|active)" title=/);
@@ -65,7 +98,7 @@ describe('responsive MVP layout', () => {
     expect(main).toContain('summary-token-source');
     expect(main).toContain('gold-breakdown-dialog');
     expect(main).toContain('heroRecords');
-    expect(main).toContain('Collected gem pickups grant 1 XP and 1 gold');
+    expect(main).toContain('XP comes from collected gems; gold comes from collected light-source, elite, and chest rewards');
     expect(main).toContain('id="game-announce"');
     expect(main).toContain('function drawHero');
     expect(main).toContain('function drawEnemy');

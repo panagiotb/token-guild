@@ -1,0 +1,27 @@
+{
+  "tables": [
+    {
+      "id": "code-dungeon",
+      "eliteDropChance": 0.38,
+      "lightSourceSpawnChance": 0.1,
+      "lightSourceMaxSpawnChance": 0.5,
+      "chest": { "baseTier": 1, "fiveItemChance": 0.01, "threeItemChance": 0.02 },
+      "lightSources": [
+        { "kind": "gold-coin", "value": 1, "weight": 50, "minLevel": 1, "luckScaled": false },
+        { "kind": "gold-sack", "value": 10, "weight": 10, "minLevel": 1, "luckScaled": false },
+        { "kind": "gold-hoard", "value": 100, "weight": 1, "minLevel": 5, "luckScaled": true },
+        { "kind": "arcane-cleanser", "value": 0, "weight": 1, "minLevel": 8, "luckScaled": true },
+        { "kind": "chrono-stasis", "value": 0, "weight": 2, "minLevel": 4, "luckScaled": true },
+        { "kind": "mana-magnet", "value": 0, "weight": 2, "minLevel": 12, "luckScaled": true },
+        { "kind": "mana-roast", "value": 0, "weight": 12, "minLevel": 1, "luckScaled": true }
+      ],
+      "elite": [
+        { "kind": "mana-roast", "weight": 12, "valueMultiplier": 0, "minLevel": 1, "luckScaled": false },
+        { "kind": "mana-magnet", "weight": 10, "valueMultiplier": 0, "minLevel": 1, "luckScaled": false },
+        { "kind": "chrono-stasis", "weight": 8, "valueMultiplier": 0, "minLevel": 1, "luckScaled": false },
+        { "kind": "arcane-cleanser", "weight": 4, "valueMultiplier": 0, "minLevel": 1, "luckScaled": false },
+        { "kind": "gold-sack", "weight": 4, "valueMultiplier": 2, "minLevel": 1, "luckScaled": false }
+      ]
+    }
+  ]
+}

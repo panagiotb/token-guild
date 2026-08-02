@@ -1,5 +1,13 @@
 {
-  "xpToNextLevel": [5, 20, 45, 80, 125, 180, 245, 320, 405, 500, 605, 720, 845, 980, 1125, 1280, 1445, 1620, 1805, 2600, 2866, 3146, 3438, 3744, 4062, 4394, 4738, 5096, 5466, 5850, 6246, 6656, 7078, 7514, 7962, 8424, 8898, 9386, 9886, 12800],
+  "levelRequirements": {
+    "earlyIncrement": 10,
+    "midIncrement": 13,
+    "lateIncrement": 16,
+    "earlyLastLevel": 20,
+    "midLastLevel": 40,
+    "level20BonusXp": 600,
+    "level40BonusXp": 2400
+  },
   "thresholds": {
     "level20BonusGrowth": 1,
     "level40BonusGrowth": 1

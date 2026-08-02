@@ -30,6 +30,15 @@ describe('TokenBus', () => {
     expect(output[0]).toMatchObject({ count: 5, inputTokens: 30, cacheTokens: 300, isAgentActive: true });
   });
 
+  it('preserves reasoning-token detail while aggregating completion usage', () => {
+    const output: unknown[] = [];
+    const bus = new TokenBus((value) => output.push(value));
+    bus.ingest({ ...event(100, 4), outputTokens: 4, reasoningTokens: 3 });
+    bus.ingest({ ...event(200, 6), outputTokens: 6, reasoningTokens: 2 });
+    bus.flush(249);
+    expect(output[0]).toMatchObject({ count: 10, outputTokens: 10, reasoningTokens: 5 });
+  });
+
   it('classifies idle and streaming states without combat modes', () => {
     const bus = new TokenBus(() => undefined);
     bus.ingest(event(100, 1, 10)); expect(bus.statusAt(100)).toBe('streaming');

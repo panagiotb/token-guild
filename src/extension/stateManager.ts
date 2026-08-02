@@ -2,10 +2,40 @@ import type * as vscode from 'vscode';
 import { PROGRESS_SCHEMA_VERSION } from '../shared/types';
 import type { HeroProgressRecord, PersistedProgress } from '../shared/types';
 import { validateProgress } from '../shared/validation';
-import { metaUpgradeCost, metaUpgradeDefinition, metaUpgradeRefund } from '../game/meta';
+import { META_UPGRADES, metaUpgradeCost, metaUpgradeDefinition, metaUpgradeRefund, normalizeMetaUpgrades } from '../game/meta';
+import { MVP_REGISTRY } from '../game/content';
+import { BatteryEngine } from '../shared/battery';
+import type { HostRunCheckpoint } from './hostRun';
 
 const STORAGE_KEY = 'tokenGuild.progress';
+const RUN_CHECKPOINTS_KEY = 'tokenGuild.activeRuns';
+const PERSISTENCE_LAYOUT_KEY = 'tokenGuild.persistence.layout';
+const PERSISTENCE_LAYOUT_VERSION = 1 as const;
+const MAX_ACTIVE_RUN_CHECKPOINTS = 4;
+const MAX_RUN_CHECKPOINT_BYTES = 512_000;
 const HERO_IDS = ['warrior', 'wizard', 'rogue', 'ranger', 'paladin', 'necromancer'] as const;
+
+const DOMAIN_KEYS = {
+  wallet: 'tokenGuild.wallet',
+  collection: 'tokenGuild.collection',
+  unlocks: 'tokenGuild.unlocks',
+  settings: 'tokenGuild.settings',
+  battery: 'tokenGuild.battery',
+  upgrades: 'tokenGuild.upgrades',
+  runHistory: 'tokenGuild.runHistory'
+} as const;
+
+type ProgressStorage = Pick<vscode.Memento, 'get' | 'update'>;
+
+interface StoredDomain<T> {
+  readonly version: typeof PERSISTENCE_LAYOUT_VERSION;
+  readonly value: T;
+}
+
+interface PersistenceLayout {
+  readonly version: typeof PERSISTENCE_LAYOUT_VERSION;
+  readonly state: 'writing' | 'ready';
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -53,6 +83,102 @@ function safeSettings(value: unknown): { muted: boolean; volume: number } {
     : { ...DEFAULT_PROGRESS.settings };
 }
 
+function applyRegistryUnlocks(unlockedHeroes: readonly string[], heroId: string | undefined, level: number | undefined, nextGold: number, nextRunCount: number): string[] {
+  const unlocked = new Set(unlockedHeroes);
+  for (const hero of MVP_REGISTRY.classes) {
+    const condition = hero.unlock;
+    if (!condition) continue;
+    const met = condition.metric === 'gold'
+      ? nextGold >= condition.threshold
+      : condition.metric === 'run-count'
+        ? nextRunCount >= condition.threshold
+        : level !== undefined && level >= condition.threshold && (condition.heroId === undefined || condition.heroId === heroId);
+    if (met) unlocked.add(hero.id);
+  }
+  return [...unlocked];
+}
+
+function storedDomain<T>(value: T): StoredDomain<T> {
+  return { version: PERSISTENCE_LAYOUT_VERSION, value };
+}
+
+function readDomain<T>(storage: ProgressStorage, key: string): T | undefined {
+  const raw = storage.get<unknown>(key);
+  if (!isRecord(raw) || raw.version !== PERSISTENCE_LAYOUT_VERSION || !('value' in raw)) return undefined;
+  return raw.value as T;
+}
+
+function hasReadyPersistenceLayout(storage: ProgressStorage): boolean {
+  const raw = storage.get<unknown>(PERSISTENCE_LAYOUT_KEY);
+  return isRecord(raw) && raw.version === PERSISTENCE_LAYOUT_VERSION && raw.state === 'ready';
+}
+
+function domainsForProgress(progress: PersistedProgress): {
+  wallet: { gold: number; totalTokens: number };
+  collection: { relics: readonly string[] };
+  unlocks: { unlockedHeroes: readonly string[]; unlockedStages: readonly string[]; heroRecords: Readonly<Record<string, HeroProgressRecord>> };
+  settings: { muted: boolean; volume: number };
+  battery: { batteryLevel: number };
+  upgrades: Readonly<Record<string, number>>;
+  runHistory: { runCount: number; completedRunIds: readonly string[] };
+} {
+  return {
+    wallet: { gold: progress.gold, totalTokens: progress.totalTokens },
+    collection: { relics: progress.relics },
+    unlocks: { unlockedHeroes: progress.unlockedHeroes, unlockedStages: progress.unlockedStages, heroRecords: progress.heroRecords },
+    settings: { muted: progress.settings.muted, volume: progress.settings.volume },
+    battery: { batteryLevel: progress.batteryLevel },
+    upgrades: progress.upgrades,
+    runHistory: { runCount: progress.runCount, completedRunIds: progress.completedRunIds }
+  };
+}
+
+/**
+ * Reconstructs the aggregate progress view from the independently stored
+ * domains. A missing/corrupt domain is reported as unavailable so callers can
+ * fall back to the legacy aggregate mirror rather than silently dropping
+ * valid progress during a partial write or interrupted migration.
+ */
+function readDomainProgress(storage: ProgressStorage): PersistedProgress | undefined {
+  if (!hasReadyPersistenceLayout(storage)) return undefined;
+  const wallet = readDomain<unknown>(storage, DOMAIN_KEYS.wallet);
+  const collection = readDomain<unknown>(storage, DOMAIN_KEYS.collection);
+  const unlocks = readDomain<unknown>(storage, DOMAIN_KEYS.unlocks);
+  const settings = readDomain<unknown>(storage, DOMAIN_KEYS.settings);
+  const battery = readDomain<unknown>(storage, DOMAIN_KEYS.battery);
+  const upgrades = readDomain<unknown>(storage, DOMAIN_KEYS.upgrades);
+  const runHistory = readDomain<unknown>(storage, DOMAIN_KEYS.runHistory);
+  const domains = [wallet, collection, unlocks, settings, battery, upgrades, runHistory];
+  if (domains.some((domain) => domain === undefined) || domains.some((domain) => !isRecord(domain))) return undefined;
+
+  const walletRecord = wallet as Record<string, unknown>;
+  const collectionRecord = collection as Record<string, unknown>;
+  const unlocksRecord = unlocks as Record<string, unknown>;
+  const settingsRecord = settings as Record<string, unknown>;
+  const batteryRecord = battery as Record<string, unknown>;
+  const runHistoryRecord = runHistory as Record<string, unknown>;
+  const unlockedHeroes = safeStringArray(unlocksRecord.unlockedHeroes, DEFAULT_PROGRESS.unlockedHeroes, 64);
+  const candidate: PersistedProgress = {
+    schemaVersion: PROGRESS_SCHEMA_VERSION,
+    gold: nonNegativeNumber(walletRecord.gold, DEFAULT_PROGRESS.gold),
+    unlockedHeroes,
+    unlockedStages: safeStringArray(unlocksRecord.unlockedStages, DEFAULT_PROGRESS.unlockedStages, 64),
+    relics: safeStringArray(collectionRecord.relics, DEFAULT_PROGRESS.relics, 64),
+    upgrades: normalizeMetaUpgrades(safeUpgrades(upgrades)),
+    heroRecords: safeHeroRecords(unlocksRecord.heroRecords, unlockedHeroes),
+    runCount: nonNegativeNumber(runHistoryRecord.runCount, DEFAULT_PROGRESS.runCount),
+    totalTokens: nonNegativeNumber(walletRecord.totalTokens, DEFAULT_PROGRESS.totalTokens),
+    batteryLevel: typeof batteryRecord.batteryLevel === 'number' && Number.isInteger(batteryRecord.batteryLevel) && batteryRecord.batteryLevel >= 1 && batteryRecord.batteryLevel <= 5 ? batteryRecord.batteryLevel : DEFAULT_PROGRESS.batteryLevel,
+    completedRunIds: safeStringArray(runHistoryRecord.completedRunIds, DEFAULT_PROGRESS.completedRunIds, 128),
+    settings: safeSettings(settingsRecord)
+  };
+  try {
+    return validateProgress(candidate);
+  } catch {
+    return undefined;
+  }
+}
+
 export const DEFAULT_PROGRESS: PersistedProgress = {
   schemaVersion: PROGRESS_SCHEMA_VERSION,
   gold: 0,
@@ -85,7 +211,7 @@ export function migrateProgress(raw: unknown): PersistedProgress {
     unlockedHeroes,
     unlockedStages,
     relics,
-    upgrades: safeUpgrades(raw.upgrades),
+    upgrades: normalizeMetaUpgrades(safeUpgrades(raw.upgrades)),
     heroRecords: safeHeroRecords(raw.heroRecords, unlockedHeroes),
     runCount: nonNegativeNumber(raw.runCount, DEFAULT_PROGRESS.runCount),
     totalTokens: nonNegativeNumber(raw.totalTokens, DEFAULT_PROGRESS.totalTokens),
@@ -104,23 +230,56 @@ export class StateManager {
   public constructor(private readonly storage: Pick<vscode.Memento, 'get' | 'update'>) {}
 
   public async load(): Promise<PersistedProgress> {
+    const domainProgress = readDomainProgress(this.storage);
+    if (domainProgress) return domainProgress;
     const raw = this.storage.get<unknown>(STORAGE_KEY);
     if (raw === undefined) return DEFAULT_PROGRESS;
     try {
-      return validateProgress(raw);
+      const current = validateProgress(raw);
+      const upgrades = normalizeMetaUpgrades(current.upgrades);
+      const normalized = JSON.stringify(upgrades) !== JSON.stringify(current.upgrades) ? { ...current, upgrades } : current;
+      // A valid legacy aggregate is migrated into the domain layout on the
+      // first load. The aggregate mirror remains for rollback/corruption
+      // recovery and older extension versions.
+      await this.persistProgress(normalized);
+      return normalized;
     } catch {
       const migrated = migrateProgress(raw);
-      await this.storage.update(STORAGE_KEY, migrated);
+      await this.persistProgress(migrated);
       return migrated;
     }
   }
 
   public async save(progress: PersistedProgress): Promise<void> {
-    await this.storage.update(STORAGE_KEY, validateProgress(progress));
+    await this.persistProgress(validateProgress(progress));
   }
 
   public async reset(): Promise<void> {
-    await this.storage.update(STORAGE_KEY, DEFAULT_PROGRESS);
+    await this.persistProgress(DEFAULT_PROGRESS);
+    await this.clearRunCheckpoints();
+  }
+
+  /** Load detached run checkpoints separately from wallet/progression data.
+   * Invalid checkpoint contents are returned for host-side structural
+   * validation; they never enter the persistent reward path directly. */
+  public async loadRunCheckpoints(): Promise<HostRunCheckpoint[]> {
+    const raw = this.storage.get<unknown>(RUN_CHECKPOINTS_KEY);
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, MAX_ACTIVE_RUN_CHECKPOINTS) as HostRunCheckpoint[];
+  }
+
+  /** Persist only a bounded, JSON-safe set of active run checkpoints. The
+   * simulation remains the authority; this is a crash/reload recovery cache,
+   * not a second wallet or reward ledger. */
+  public async saveRunCheckpoints(checkpoints: readonly HostRunCheckpoint[]): Promise<void> {
+    if (checkpoints.length > MAX_ACTIVE_RUN_CHECKPOINTS) throw new Error('Too many active run checkpoints');
+    const serialized = JSON.stringify(checkpoints);
+    if (serialized.length > MAX_RUN_CHECKPOINT_BYTES) throw new Error('Active run checkpoints exceed storage limit');
+    await this.storage.update(RUN_CHECKPOINTS_KEY, JSON.parse(serialized));
+  }
+
+  public async clearRunCheckpoints(): Promise<void> {
+    await this.storage.update(RUN_CHECKPOINTS_KEY, []);
   }
 
   public async purchaseUpgrade(progress: PersistedProgress, upgradeId: string): Promise<PersistedProgress> {
@@ -128,7 +287,8 @@ export class StateManager {
     const definition = metaUpgradeDefinition(upgradeId);
     if (!definition) throw new Error('Unknown meta upgrade');
     const rank = current.upgrades[upgradeId] ?? 0;
-    const cost = metaUpgradeCost(upgradeId, rank);
+    const totalBought = META_UPGRADES.reduce((total, entry) => total + Math.max(0, Math.min(entry.maxRank, Math.floor(current.upgrades[entry.id] ?? 0))), 0);
+    const cost = metaUpgradeCost(upgradeId, rank, totalBought + 1);
     if (!Number.isFinite(cost) || rank >= definition.maxRank) throw new Error('Meta upgrade is at maximum rank');
     if (current.gold < cost) throw new Error('Insufficient gold');
     return this.saveAndReturn({ ...current, gold: current.gold - cost, upgrades: { ...current.upgrades, [upgradeId]: rank + 1 } });
@@ -142,9 +302,47 @@ export class StateManager {
     return this.saveAndReturn({ ...current, gold: current.gold + refund, upgrades });
   }
 
+  public async purchaseBattery(progress: PersistedProgress): Promise<PersistedProgress> {
+    const current = validateProgress(progress);
+    const nextLevel = current.batteryLevel + 1;
+    const cost = BatteryEngine.upgradeCost(nextLevel);
+    if (nextLevel > BatteryEngine.MAX_LEVEL) throw new Error('Token battery is at maximum level');
+    if (current.gold < cost) throw new Error('Insufficient gold');
+    return this.saveAndReturn({ ...current, gold: current.gold - cost, batteryLevel: nextLevel });
+  }
+
+  public async updateSettings(progress: PersistedProgress, settings: { muted: boolean; volume: number }): Promise<PersistedProgress> {
+    const current = validateProgress(progress);
+    if (typeof settings.muted !== 'boolean' || !Number.isFinite(settings.volume) || settings.volume < 0 || settings.volume > 1) throw new Error('Invalid audio settings');
+    return this.saveAndReturn({ ...current, settings: { muted: settings.muted, volume: settings.volume } });
+  }
+
   private async saveAndReturn(next: PersistedProgress): Promise<PersistedProgress> {
     await this.save(next);
     return next;
+  }
+
+  /**
+   * Writes a compatibility aggregate plus independently versioned domains.
+   * The layout marker is set to `writing` before mutations and `ready` only
+   * after every domain has been written. If the host is interrupted midway,
+   * the next load ignores the partial domains and safely uses the aggregate
+   * mirror instead of combining unrelated generations.
+   */
+  private async persistProgress(progress: PersistedProgress): Promise<void> {
+    const domains = domainsForProgress(progress);
+    const writing: PersistenceLayout = { version: PERSISTENCE_LAYOUT_VERSION, state: 'writing' };
+    const ready: PersistenceLayout = { version: PERSISTENCE_LAYOUT_VERSION, state: 'ready' };
+    await this.storage.update(PERSISTENCE_LAYOUT_KEY, writing);
+    await this.storage.update(STORAGE_KEY, progress);
+    await this.storage.update(DOMAIN_KEYS.wallet, storedDomain(domains.wallet));
+    await this.storage.update(DOMAIN_KEYS.collection, storedDomain(domains.collection));
+    await this.storage.update(DOMAIN_KEYS.unlocks, storedDomain(domains.unlocks));
+    await this.storage.update(DOMAIN_KEYS.settings, storedDomain(domains.settings));
+    await this.storage.update(DOMAIN_KEYS.battery, storedDomain(domains.battery));
+    await this.storage.update(DOMAIN_KEYS.upgrades, storedDomain(domains.upgrades));
+    await this.storage.update(DOMAIN_KEYS.runHistory, storedDomain(domains.runHistory));
+    await this.storage.update(PERSISTENCE_LAYOUT_KEY, ready);
   }
 
   public async applyRunReward(progress: PersistedProgress, runId: string, gold: number, tokens: number, heroId?: string, level?: number): Promise<PersistedProgress> {
@@ -161,17 +359,12 @@ export class StateManager {
     }
     const nextRunCount = current.runCount + 1;
     const nextGold = current.gold + gold;
-    const nextUnlocked = new Set(current.unlockedHeroes);
-    if (heroId === 'warrior' && (level ?? 0) >= 5) nextUnlocked.add('wizard');
-    if (nextGold >= 100) nextUnlocked.add('rogue');
-    if (nextRunCount >= 3) nextUnlocked.add('ranger');
-    if ((level ?? 0) >= 10) nextUnlocked.add('paladin');
-    if (nextRunCount >= 5) nextUnlocked.add('necromancer');
+    const nextUnlocked = applyRegistryUnlocks(current.unlockedHeroes, heroId, level, nextGold, nextRunCount);
     const nextRelics = new Set(current.relics);
     if (nextRunCount >= 1) nextRelics.add('magic-banger');
     if ((level ?? 0) >= 10) nextRelics.add('grim-grimoire');
     if (nextRunCount >= 3) nextRelics.add('milky-way-map');
-    const next: PersistedProgress = { ...current, gold: nextGold, totalTokens: current.totalTokens + tokens, runCount: nextRunCount, completedRunIds: [...current.completedRunIds, runId], heroRecords, unlockedHeroes: [...nextUnlocked], relics: [...nextRelics] };
+    const next: PersistedProgress = { ...current, gold: nextGold, totalTokens: current.totalTokens + tokens, runCount: nextRunCount, completedRunIds: [...current.completedRunIds, runId], heroRecords, unlockedHeroes: nextUnlocked, relics: [...nextRelics] };
     await this.save(next);
     return next;
   }

@@ -3,6 +3,8 @@
 Status: implemented and reviewed; acceptance gate passed.
 Date: 2026-08-01
 
+> Decision update (2026-08-02): the matching-gold-on-XP-gem rule referenced below is now legacy behavior scheduled for removal. Base-game gold acquisition and save-safe migration are defined in the [P7 roadmap](P7_FULL_GAME_ROADMAP.md). Historical acceptance text is retained as the record of this milestone.
+
 > Retrospective review (2026-08-01): the pickup effects and one-item chest path passed their scoped simulation tests, but tactical pickups have no authored production spawn source and chest ownership remains global to the run. Treat this as a completed engine foundation; production completion moved to [P6](NEXT_DEVELOPMENT.md).
 
 ## Research and cross-check

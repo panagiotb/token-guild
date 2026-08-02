@@ -12,7 +12,7 @@ This directory separates verified behavior, decisions, specifications, research,
 
 ## Product decisions and specifications
 
-- [Accepted divergences](decisions/accepted-divergences.md) — the only approved departures: token battery gameplay and Token Guild gold acquisition.
+- [Accepted divergences](decisions/accepted-divergences.md) — the only approved mechanics departure is token battery gameplay; synthetic income is an additive test source and the former gold divergence is retired.
 - [MVP renderer](decisions/mvp-renderer.md) — Canvas/DOM remains the first-pass renderer.
 - [Telemetry feasibility](decisions/telemetry.md) — synthetic telemetry is the default; the loopback OTLP/HTTP JSON adapter is opt-in and tested.
 - [UI assets](decisions/ui-assets.md) — inline icon/vector policy and third-party asset gate.

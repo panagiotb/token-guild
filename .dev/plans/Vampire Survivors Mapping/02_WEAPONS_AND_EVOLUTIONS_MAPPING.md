@@ -49,6 +49,144 @@ In **Token Guild**, weapons represent auto-firing combat capabilities that trigg
 
 ---
 
+## 2a. Current reward-pool rarity metadata (verified 2026-08-02)
+
+The [Weapons reference](https://vampire-survivors.fandom.com/wiki/Weapons)
+states that rarity is the item-pool weight used by level-up and treasure-chest
+selection. The shipped first-roster registry records these values for the
+currently selectable Token Guild reskins:
+
+| Token Guild weapon | VS source | Registry rarity weight |
+| :--- | :--- | ---: |
+| Broadsword | Whip | 100 |
+| Arcane Bolt | Magic Wand | 100 |
+| Throwing Daggers | Knife | 100 |
+| Bouncing Arrow | Runetracer | 80 |
+| Aegis Barrier | Garlic | 70 |
+| Bone Throw | Bone | 1 |
+
+Evolved outputs retain source rarity 1 but are not ordinary upgrade-pool
+candidates. Broader weapon families remain planning-only.
+
+### 2b. Current Fire Wand family implementation (verified 2026-08-03)
+
+The retained [Fire Wand reference](https://vampire-survivors.fandom.com/wiki/Fire_Wand)
+and [Hellfire overview](https://vampire-survivors.fandom.com/wiki/Weapons/Overview_Stats)
+define Fire Wand as rarity 80, eight levels, 20 -> 90 damage, three fireballs,
+0.75 -> 1.35 projectile speed, a 3-second cooldown, and a 0.02-second
+projectile interval; it ignores Duration and evolves with Spinach. Hellfire is
+rarity 1, level 1, 100 damage, two projectiles, 3-second cooldown, 0.2-second
+interval, and piercing behavior.
+
+The canonical registry now exposes this family as `fire_wand` -> `hellfire`.
+Fire Wand uses the existing random-direction fan strategy, which preserves its
+near-simultaneous arc while remaining bounded. Hellfire uses the existing
+random-target sequence strategy so its 0.2-second interval is persisted and
+replay-safe; its authored pierce 99 models the source's pass-through effect.
+The historical `Dragon Breath` row remains a future reskin plan and must not be
+treated as the current registry contract.
+
+### 2c. Current Axe family implementation (verified 2026-08-03)
+
+The retained [Axe reference](https://vampire-survivors.fandom.com/wiki/Axe)
+defines Axe as rarity 100, an eight-level weapon that ignores Duration and
+throws a high arc above the hero. Its authored base row is damage 20, Amount 1,
+Area 1, Speed 1, Duration 2, Pierce 3, Cooldown 4 seconds, and a 0.2-second
+interval between additional Amount axes. The retained progression is:
+
+| Level | Damage | Amount | Pierce |
+| ---: | ---: | ---: | ---: |
+| 1 | 20 | 1 | 3 |
+| 2 | 20 | 2 | 3 |
+| 3 | 40 | 2 | 3 |
+| 4 | 40 | 2 | 5 |
+| 5 | 40 | 3 | 5 |
+| 6 | 60 | 3 | 5 |
+| 7 | 60 | 3 | 7 |
+| 8 | 80 | 3 | 7 |
+
+The registry owns this family as `battle_axe` and evolves it with
+`orb_of_expansion` (Candelabrador) into `scythe_of_doom` (Death Spiral). The
+retained [Death Spiral overview](https://vampire-survivors.fandom.com/wiki/Death_Spiral)
+defines the output as rarity 1, damage 60, Area 1.2, Speed 0.8, Amount 9,
+Cooldown 4, 0.05-second interval, Pierce 1000, and Duration ignored. The
+implementation bounds that indefinite lifetime to 30 seconds so entity state
+remains checkpoint-safe.
+
+The simulation uses one generic persisted fan-volley strategy: the first axe
+launch captures the facing/random launch angle and Amount, then releases the
+remaining projectiles at stable 0.2/0.05-second offsets. This preserves cadence,
+aim ownership, replay, and pause/checkpoint behavior without a weapon-ID branch.
+The source's vertical arc/gravity, Axe's exact Area 1.3 multiplier, and Death
+Spiral's indefinite lifetime remain explicit presentation/physics gaps rather
+than hidden approximations.
+
+### 2d. Current Cross family implementation (verified 2026-08-03)
+
+The retained [Cross reference](https://vampire-survivors.fandom.com/wiki/Cross)
+and [Heaven Sword reference](https://vampire-survivors.fandom.com/wiki/Heaven_Sword)
+describe a nearest-target projectile that boomerangs back across the screen;
+both ignore Duration. The source overview anchors Cross at damage 5, Area 1,
+Speed 1, Amount 1, Cooldown 2, 0.1-second interval, and rarity 80, with maximum
+damage 35, Area 1.2, Speed 1.5, and Amount 3. Heaven Sword is rarity 1 with
+damage 77, Area 1.2, Speed 2, Amount 1, Cooldown 3.3, 0.5-second interval,
+and high knockback.
+
+The registry owns these entries as `celestial_cross` and `heaven_blade`, with
+`clover` (Clover) as the evolution passive. The intermediate Cross rows use a
+bounded first-pass progression between the source base/max anchors; the domain
+uses a 30-pierce and 8-second lifetime safety envelope because the source table
+does not publish a finite Pierce/lifetime value for this boomerang.
+
+The simulation adds a generic persisted `boomerang` pattern: each projectile
+stores its launch origin and outbound/return phase, targets the nearest enemy,
+turns after a hit or bounded travel distance, and is removed after returning to
+the hero. Host checkpoints and webview snapshots require the complete
+boomerang state and reject those fields on other patterns. This covers the
+directional ownership and replay boundary without a Cross-specific branch;
+critical hits, wall presentation, and exact source pool limits remain future
+parity work.
+
+### 2e. Current King Bible family implementation (verified 2026-08-03)
+
+The retained [King Bible reference](https://vampire-survivors.fandom.com/wiki/King_Bible)
+describes an eight-level orbiting weapon: base damage 10, rarity 80, Amount 1,
+Cooldown 3, and a three-second effect, with Amount, Area, Speed, Damage, and
+Duration increases at the published rank breaks. The retained [Unholy Vespers
+reference](https://vampire-survivors.fandom.com/wiki/Unholy_Vespers) and overview
+anchor the evolution at damage 30, Area 1.75, Speed 1.5, Amount 4, Duration 3,
+Cooldown 3, and knockback 4; it requires Spellbinder and is rarity 1.
+
+Token Guild owns these as `orbiting_grimoire` → `unabridged_codex`. The generic
+`orbit` strategy stores each symbol's angle, radius, and angular speed, follows
+the hero in world coordinates, and retains those values through pause,
+checkpoint, and snapshot validation. Radius is bounded to 180 world units and
+the registry uses a 30-pierce safety envelope so an orbit cannot consume an
+unbounded entity budget. The source's shared hitbox-delay reset behavior,
+page-fall presentation, exact Pool Limit, and richer evolution effects remain
+future parity work.
+
+### 2f. Current Santa Water family implementation (verified 2026-08-03)
+
+The retained [Santa Water reference](https://vampire-survivors.fandom.com/wiki/Santa_Water)
+and [weapon overview](https://vampire-survivors.fandom.com/wiki/Weapons/Overview_Stats)
+anchor the base weapon at rarity 100, damage 10, Area 1, Duration 2, Speed 1,
+Amount 1, Cooldown 4.5, projectile interval 0.3, Pool Limit 20, and Hitbox
+Delay 0.5. The published rank breaks add Amount, Area, Damage, and Duration;
+the latter two Duration increases are authored as 0.25-second increments even
+where the reference rounds them to one decimal place. The [La Borra reference](https://vampire-survivors.fandom.com/wiki/La_Borra)
+anchors the evolution at damage 40, Area 2, Duration 4, Speed 1, Amount 4,
+Cooldown 4, Pool Limit 30, and Hitbox Delay 0.5, requiring Attractorb.
+
+Token Guild owns these as `alchemist_fire` → `philosophers_potion`, using a
+generic `pool` strategy. Each zone is stationary in world coordinates, the
+first drop targets the nearest eligible enemy, later drops fan around the hero,
+and every zone retains a bounded per-target 0.5-second hitbox ledger. Registry
+pool limits evict the oldest same-weapon zone before creating an over-limit
+zone; host and webview boundaries validate the cooldown ledger. Exact bottle
+fall, zone growth, Pool Limit interactions with all modifiers, and richer La
+Borra movement/presentation remain first-pass parity work.
+
 ## 3. Explicit Level 1 to Level 8/12 Stat Progression Tables
 
 ### 1. **Broadsword** *(VS: Whip)*
@@ -76,6 +214,13 @@ In **Token Guild**, weapons represent auto-firing combat capabilities that trigg
 ---
 
 ### 3. **Throwing Daggers** *(VS: Knife)*
+The retained Knife reference describes a rapid faced-direction stream. The
+current MVP registry models the base stream with a 0.1-second projectile
+interval, reducing to 0.08/0.06/0.04 seconds at the retained Knife rank breaks;
+the evolved Thousand Blades stream remains 0.05 seconds. This is an
+implementation contract for the first-stage slice, while the broader weapon
+roster remains queued for source verification.
+
 * **Level 1:** Base Damage 6.5, Cooldown 1.00s, Amount 1. Fires 1 dagger in facing direction.
 * **Level 2:** Amount 2 (+1 dagger).
 * **Level 3:** Amount 3 (+1 dagger).

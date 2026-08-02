@@ -4,6 +4,32 @@
     "name": "Code Dungeon",
     "durationSeconds": 1800,
     "boss": "timeout_reaper",
+    "dropTableId": "code-dungeon",
+    "topology": "open",
+    "modifiers": [],
+    "spawnPolicy": {
+      "enemyInnerRadius": 215,
+      "enemyOuterRadius": 265,
+      "bossRadius": 235,
+      "lightSourceInnerRadius": 230,
+      "lightSourceOuterRadius": 290,
+      "enemyPersistenceRadius": 720
+    },
+    "scaling": {
+      "healthPerMinute": 0.03,
+      "damagePerMinute": 0.02,
+      "speedPerMinute": 0.01
+    },
+    "combat": {
+      "contactRadius": 8,
+      "contactInvulnerabilitySeconds": 0.5
+    },
+    "finale": {
+      "graceSeconds": 60,
+      "threatIntervalSeconds": 60,
+      "clearRegularEnemies": true,
+      "invulnerableThreat": true
+    },
     "waves": [
       { "id": "training-bats", "fromSecond": 0, "untilSecond": 300, "enemy": "bug_bat", "spawnEverySeconds": 1.5, "minimumAlive": 4, "maximumAlive": 20 },
       { "id": "training-spectres", "fromSecond": 0, "untilSecond": 300, "enemy": "syntax_specter", "spawnEverySeconds": 2, "minimumAlive": 3, "maximumAlive": 16 },

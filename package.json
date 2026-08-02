@@ -55,7 +55,7 @@
         "tokenGuild.telemetry.otlpEnabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable the opt-in loopback OTLP/HTTP JSON trace adapter. It listens only on localhost and never stores raw traces."
+          "description": "Enable the opt-in loopback OTLP/HTTP JSON or protobuf trace/log adapter. It listens only on localhost and never stores raw traces."
         },
         "tokenGuild.telemetry.otlpPort": {
           "type": "number",
@@ -80,7 +80,8 @@
     "test:synthetic": "vitest run tests/unit/simulation.test.ts tests/unit/tokenBus.test.ts tests/unit/telemetryMapping.test.ts tests/unit/mvpScenario.test.ts",
     "test:integration": "npm run build && node tests/integration/launch.cjs",
     "test:e2e": "npm run test:integration",
-    "package": "npm run build && vsce package --no-dependencies"
+    "package": "npm run build && vsce package --no-dependencies",
+    "assets:index": "node scripts/build-asset-index.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -90,6 +91,7 @@
     "concurrently": "^9.0.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.0.0",
+    "jsdom": "^26.1.0",
     "mocha": "^11.0.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.0.0",

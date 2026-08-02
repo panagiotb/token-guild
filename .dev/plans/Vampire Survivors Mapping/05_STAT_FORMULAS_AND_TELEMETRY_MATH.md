@@ -74,6 +74,13 @@ $$\text{Speed}_{\text{mob}} = \text{BaseSpeed} \times (1.0 + 0.05 \times \text{C
 
 $$\text{Damage}_{\text{mob}} = \text{BaseDamage} \times (1.0 + 0.05 \times \text{Curse})$$
 
+> Historical proposal note (2026-08-02): this damage formula is retained for
+> traceability, but it is not an approved parity rule. The verified [Curse](https://vampire-survivors.fandom.com/wiki/Curse)
+> contract changes enemy health, speed, spawn frequency, and quantity; it does
+> not directly increase enemy damage. The production implementation therefore
+> applies only the stage-authored minute damage curve. See the active parity
+> matrix for the current rule.
+
 ---
 
 ## 5. Historical TypeScript sketch (not a production path)

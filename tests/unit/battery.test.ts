@@ -21,12 +21,12 @@ describe('token battery engine', () => {
     expect(active.drainedTokens).toBe(20);
   });
 
-  it('converts full-battery overflow into decaying gold without wallet side effects', () => {
+  it('caps full-battery overflow without creating a gameplay currency', () => {
     const first = BatteryEngine.processTick(0.25, BatteryEngine.createState(1), true, 10000);
     expect(first.newState.currentCapacity).toBe(5000);
-    expect(first.goldSpawned).toBeGreaterThan(0);
+    expect(first.goldSpawned).toBe(0);
     const second = BatteryEngine.processTick(0.25, first.newState, true, 10000);
-    expect(second.goldSpawned).toBeLessThan(first.goldSpawned);
+    expect(second.goldSpawned).toBe(0);
   });
 
   it('hard-locks at zero and only re-ignites at fifteen percent', () => {
